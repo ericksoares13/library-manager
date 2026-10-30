@@ -1,0 +1,25 @@
+#!/bin/sh
+# Formata com o Spotless os arquivos do commit e os adiciona de volta já formatados.
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+[ -z "$staged" ] && exit 0
+
+# Arquivos com parte das mudanças fora do stage seriam commitados por inteiro após a formatação
+partial=$(git diff --name-only | grep -Fx "$staged")
+if [ -n "$partial" ]; then
+    echo "pre-commit: os arquivos abaixo têm mudanças fora do stage:"
+    echo "$partial" | sed 's/^/  /'
+    echo "Adicione o arquivo inteiro (git add) ou use --no-verify para pular a formatação."
+    exit 1
+fi
+
+if ! ./gradlew spotlessApply --quiet; then
+    echo "pre-commit: falha ao formatar com o Spotless."
+    exit 1
+fi
+
+echo "$staged" | while IFS= read -r file; do
+    [ -f "$file" ] && git add "$file"
+done
+
+exit 0

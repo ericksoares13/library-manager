@@ -20,8 +20,7 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 ## Tecnologias
 
 - **Java 25:** linguagem principal.
-- **Spring Boot:** framework web para a API REST, a validação de dados e a integração com o
-  banco.
+- **Spring Boot:** framework web para a API REST, a validação de dados e a integração com o banco.
 - **MongoDB:** banco de dados NoSQL que armazena livros, membros e empréstimos.
 - **Gradle (Kotlin DSL):** build e gerenciamento de dependências.
 - **JUnit 5:** testes de unidade.
@@ -33,8 +32,8 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 ## Uso de IA
 
 - **Claude Code (Anthropic):** assistente de programação usado no terminal para estruturar o
-  projeto, auxiliar na escrita do código e da documentação. Todo o código gerado foi revisado
-  pelo autor.
+  projeto, auxiliar na escrita do código e da documentação. Todo o código gerado foi revisado pelo
+  autor.
 
 ## Execução dos testes
 

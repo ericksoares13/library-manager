@@ -1,0 +1,4 @@
+# Scripts executados pelo sh precisam de LF, mesmo em checkout no Windows
+gradlew text eol=lf
+.githooks/* text eol=lf
+*.bat text eol=crlf

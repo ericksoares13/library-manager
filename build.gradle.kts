@@ -36,6 +36,29 @@ spotless {
         trimTrailingWhitespace()
         endWithNewline()
     }
+    kotlinGradle {
+        ktlint()
+    }
+    format("markdown") {
+        target("**/*.md")
+        targetExclude("build/**", ".claude/**")
+        prettier("3.6.2").config(mapOf("parser" to "markdown", "proseWrap" to "always", "printWidth" to 100))
+    }
+    format("misc") {
+        target(".gitignore", ".githooks/*", ".github/**/*.yml", "config/**/*.xml")
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
+val installGitHooks by tasks.registering(Exec::class) {
+    description = "Configura o git para usar os hooks versionados em .githooks"
+    onlyIf { file(".git").exists() }
+    commandLine("git", "config", "core.hooksPath", ".githooks")
+}
+
+tasks.compileJava {
+    dependsOn(installGitHooks)
 }
 
 checkstyle {
