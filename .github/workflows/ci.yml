@@ -65,4 +65,4 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: build/reports/jacoco/test/jacocoTestReport.xml
           flags: ${{ matrix.os }}
-          fail_ci_if_error: false
+          fail_ci_if_error: true
