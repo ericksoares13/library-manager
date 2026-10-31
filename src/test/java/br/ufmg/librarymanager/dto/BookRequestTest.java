@@ -1,0 +1,70 @@
+package br.ufmg.librarymanager.dto;
+
+import java.util.Set;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
+
+@DisplayName("Validação de BookRequest")
+class BookRequestTest {
+
+    @ParameterizedTest(name = "ISBN {0}")
+    @ValueSource(strings = {"9788535910663", "8535910662"})
+    @DisplayName("Aceita ISBN com 13 ou 10 dígitos")
+    void givenIsbnWithThirteenOrTenDigits_whenValidate_thenHasNoViolations(final String isbn) {
+        // Arrange
+        final BookRequest request = new BookRequest("Dom Casmurro", "Machado", isbn, 1);
+
+        // Act
+        final Set<String> violations = ConstraintViolations.of(request);
+
+        // Assert
+        Assertions.assertEquals(Set.of(), violations);
+    }
+
+    @ParameterizedTest(name = "ISBN {0}")
+    @ValueSource(strings = {"12345", "97885359106AB"})
+    @DisplayName("Rejeita ISBN com tamanho errado ou com letras")
+    void givenIsbnWithWrongLengthOrLetters_whenValidate_thenReportsInvalidIsbn(final String isbn) {
+        // Arrange
+        final BookRequest request = new BookRequest("Dom Casmurro", "Machado", isbn, 1);
+
+        // Act
+        final Set<String> violations = ConstraintViolations.of(request);
+
+        // Assert
+        Assertions.assertEquals(Set.of("isbn: isbn must have 10 or 13 digits"), violations);
+    }
+
+    @ParameterizedTest(name = "título e autor = {0}")
+    @NullAndEmptySource
+    @ValueSource(strings = {"   "})
+    @DisplayName("Exige título e autor preenchidos")
+    void givenBlankTitleAndAuthor_whenValidate_thenReportsBothFields(final String blank) {
+        // Arrange
+        final BookRequest request = new BookRequest(blank, blank, "9788535910663", 1);
+
+        // Act
+        final Set<String> violations = ConstraintViolations.of(request);
+
+        // Assert
+        Assertions.assertEquals(
+                Set.of("title: title is required", "author: author is required"), violations);
+    }
+
+    @Test
+    @DisplayName("Exige pelo menos um exemplar")
+    void givenZeroCopies_whenValidate_thenReportsMinimumCopies() {
+        // Arrange
+        final BookRequest request = new BookRequest("Dom Casmurro", "Machado", "9788535910663", 0);
+
+        // Act
+        final Set<String> violations = ConstraintViolations.of(request);
+
+        // Assert
+        Assertions.assertEquals(Set.of("totalCopies: totalCopies must be at least 1"), violations);
+    }
+}

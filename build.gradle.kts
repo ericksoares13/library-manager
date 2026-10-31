@@ -20,6 +20,8 @@ repositories {
     mavenCentral()
 }
 
+val mockitoAgent = configurations.create("mockitoAgent")
+
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
@@ -27,6 +29,8 @@ dependencies {
 
     testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+    mockitoAgent("org.mockito:mockito-core") { isTransitive = false }
 }
 
 spotless {
@@ -73,6 +77,8 @@ jacoco {
 
 tasks.test {
     useJUnitPlatform()
+    // Mockito como agente: o Java 21+ restringe o carregamento dinâmico de agentes
+    jvmArgs("-javaagent:${mockitoAgent.asPath}")
     finalizedBy(tasks.jacocoTestReport)
 }
 
