@@ -7,7 +7,7 @@ plugins {
     id("com.diffplug.spotless") version "8.0.0"
 }
 
-group = "org.example"
+group = "br.ufmg"
 version = "0.0.1-SNAPSHOT"
 
 java {
