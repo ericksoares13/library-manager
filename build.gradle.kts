@@ -30,6 +30,7 @@ dependencies {
 }
 
 spotless {
+    lineEndings = com.diffplug.spotless.LineEnding.UNIX
     java {
         googleJavaFormat().aosp().reflowLongStrings()
         removeUnusedImports()
