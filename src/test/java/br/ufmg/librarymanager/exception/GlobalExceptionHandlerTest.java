@@ -1,0 +1,96 @@
+package br.ufmg.librarymanager.exception;
+
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.core.MethodParameter;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BeanPropertyBindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+
+@DisplayName("Tratamento de erros da API")
+class GlobalExceptionHandlerTest {
+
+    private GlobalExceptionHandler handler;
+
+    @BeforeEach
+    void setUp() {
+        this.handler = new GlobalExceptionHandler();
+    }
+
+    private static MethodArgumentNotValidException invalidRequest(final FieldError... errors)
+            throws NoSuchMethodException {
+        final BeanPropertyBindingResult result =
+                new BeanPropertyBindingResult(new Object(), "request");
+        Arrays.stream(errors).forEach(result::addError);
+        final Method method = Object.class.getMethod("equals", Object.class);
+        return new MethodArgumentNotValidException(new MethodParameter(method, 0), result);
+    }
+
+    @Test
+    @DisplayName("Recurso não encontrado responde 404")
+    void givenNotFoundException_whenHandle_thenRespondsWith404() {
+        // Arrange
+        final NotFoundException exception = new NotFoundException("Book not found: b1");
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleNotFound(exception);
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Assertions.assertEquals(new ApiError("Book not found: b1"), response.getBody());
+    }
+
+    @Test
+    @DisplayName("Violação de regra de negócio responde 409")
+    void givenBusinessException_whenHandle_thenRespondsWith409() {
+        // Arrange
+        final BusinessException exception = new BusinessException("No copies available");
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleBusiness(exception);
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        Assertions.assertEquals(new ApiError("No copies available"), response.getBody());
+    }
+
+    @Test
+    @DisplayName("Erros de validação saem ordenados por campo")
+    void givenSeveralFieldErrors_whenHandleValidation_thenMessagesAreSortedByField()
+            throws NoSuchMethodException {
+        // Arrange
+        final MethodArgumentNotValidException exception =
+                invalidRequest(
+                        new FieldError("request", "title", "title is required"),
+                        new FieldError("request", "author", "author is required"));
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleValidation(exception);
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertEquals(
+                new ApiError("author: author is required; title: title is required"),
+                response.getBody());
+    }
+
+    @Test
+    @DisplayName("Validação sem erros de campo usa mensagem genérica")
+    void givenNoFieldErrors_whenHandleValidation_thenUsesGenericMessage()
+            throws NoSuchMethodException {
+        // Arrange
+        final MethodArgumentNotValidException exception = invalidRequest();
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleValidation(exception);
+
+        // Assert
+        Assertions.assertEquals(new ApiError("Invalid request"), response.getBody());
+    }
+}
