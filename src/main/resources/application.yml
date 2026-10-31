@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: library-manager
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/library}
+      auto-index-creation: true
+
+server:
+  port: ${PORT:8080}
