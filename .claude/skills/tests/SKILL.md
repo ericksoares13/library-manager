@@ -42,7 +42,7 @@ por classe de produção (`Book.java` → `BookTest.java`).
 | `dto` (records)     | Teste puro com o `Validator` do Jakarta (`Validation.buildDefaultValidatorFactory()`). |
 | `service`           | `@ExtendWith(MockitoExtension.class)`, repositories mockados, `Clock.fixed`.           |
 | `exception`         | Chamar o handler diretamente e verificar status + `ApiError`.                          |
-| `controller`        | MockMvc (a definir).                                                                   |
+| `controller`        | `@WebMvcTest` com o service mockado (`@MockitoBean`). Ver "Testes de controller".      |
 
 **Comandos:**
 
@@ -81,6 +81,7 @@ relatório. **Não precisa seguir o formato "Dado/quando/então"**: essa estrutu
 método.
 
 ```java
+
 @DisplayName("Livro")
 class BookTest {
 
@@ -190,7 +191,8 @@ Escolha os cenários assim:
 - **Particionamento em classes de equivalência:** um teste por classe de entrada (válida e cada
   tipo de inválida). Ex.: ISBN com tamanho errado e ISBN com letras são classes diferentes; dois
   ISBNs com tamanho errado são a mesma classe.
-- **Análise de valor-limite:** teste nas bordas, onde os bugs se concentram. Ex.: devolver no próprio
+- **Análise de valor-limite:** teste nas bordas, onde os bugs se concentram. Ex.: devolver no
+  próprio
   dia do empréstimo, verificar atraso exatamente no vencimento, membro com `MAX_ACTIVE_LOANS - 1`
   e com `MAX_ACTIVE_LOANS` empréstimos.
 - **Cada `throw` do SUT tem um teste**, e o caminho feliz de cada método público também.
@@ -217,8 +219,10 @@ Use **somente** quando o Arrange, o Act e o Assert são idênticos e só a entra
 é uma **classe de equivalência diferente**:
 
 ```java
+
 @ParameterizedTest(name = "ISBN {0}")
-@ValueSource(strings = {"12345", "97885359106AB"}) // tamanho errado / letras
+@ValueSource(strings = {"12345", "97885359106AB"})
+    // tamanho errado / letras
 void givenIsbnWithWrongLengthOrLetters_whenValidate_thenReportsInvalidIsbn(final String isbn) {
     // Arrange
     final BookRequest request = new BookRequest("Dom Casmurro", "Machado", isbn, 1);
@@ -231,7 +235,8 @@ void givenIsbnWithWrongLengthOrLetters_whenValidate_thenReportsInvalidIsbn(final
 }
 ```
 
-- Campos `@NotBlank`: `@NullAndEmptySource` + `@ValueSource(strings = {"   "})` cobre as três classes
+- Campos `@NotBlank`: `@NullAndEmptySource` + `@ValueSource(strings = {"   "})` cobre as três
+  classes
   inválidas (`null`, vazio, só espaços).
 - Sempre defina `name` no `@ParameterizedTest` para o relatório mostrar a entrada de cada execução.
 - Prefira `@ValueSource`/`@NullAndEmptySource`; use `@CsvSource` ou `@MethodSource` só quando a
@@ -248,6 +253,20 @@ void givenIsbnWithWrongLengthOrLetters_whenValidate_thenReportsInvalidIsbn(final
 **Contagem:** cada execução de um teste parametrizado aparece como um teste no relatório do Gradle.
 Para o requisito de ≥ 50 testes, considere os **métodos de teste**, para não inflar a contagem com
 parâmetros.
+
+### 2.9 Testes de controller
+
+Referência: `controller/BookControllerTest.java`.
+
+- `@WebMvcTest(XxxController.class)` + `@MockitoBean` no service; o `GlobalExceptionHandler` entra
+  no contexto automaticamente.
+- **Act:** `this.mockMvc.perform(...).andReturn().getResponse()` (helper `perform`).
+- **Assert:** `Assertions` + `JsonPath.read(body, "$.campo")`. Não use `andExpect`: ele mistura o
+  Act com o Assert.
+- **O que testar por endpoint:** o caminho feliz (status, corpo e `Location` no POST) e o 400 onde
+  houver `@Valid`, verificando que o service não foi chamado.
+- **404 e 409 uma vez por controller:** o mapeamento exceção → status já tem teste no
+  `GlobalExceptionHandlerTest`; aqui basta provar que o controller está ligado a ele.
 
 ---
 
