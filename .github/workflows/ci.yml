@@ -28,6 +28,9 @@ jobs:
       - name: Check code style (Checkstyle)
         run: ./gradlew checkstyleMain checkstyleTest
 
+      - name: Lint front-end (ESLint)
+        run: ./gradlew lintFrontend
+
   tests:
     name: Tests (${{ matrix.os }})
     needs: lint

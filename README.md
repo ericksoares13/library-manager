@@ -22,6 +22,9 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 - **Java 25:** linguagem principal.
 - **Spring Boot:** framework web para a API REST, a validação de dados e a integração com o banco.
 - **MongoDB:** banco de dados NoSQL que armazena livros, membros e empréstimos.
+- **React + TypeScript:** interface web, em `frontend/`.
+- **Vite:** servidor de desenvolvimento e build do front-end, servido pelo próprio Spring Boot.
+- **Motion:** animações da interface.
 - **Gradle (Kotlin DSL):** build e gerenciamento de dependências.
 - **JUnit 5:** testes de unidade.
 - **JaCoCo:** medição da cobertura de testes.
@@ -34,6 +37,33 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 - **Claude Code (Anthropic):** assistente de programação usado no terminal para estruturar o
   projeto, auxiliar na escrita do código e da documentação. Todo o código gerado foi revisado pelo
   autor.
+
+## Execução da aplicação
+
+Pré-requisitos: JDK 25 e Docker. O Gradle baixa o Node.js e compila o front-end automaticamente.
+
+```bash
+# Sobe o MongoDB local (container em segundo plano, porta 27017)
+docker compose up -d
+
+# Executa a aplicação
+./gradlew bootRun
+```
+
+Para usar outro MongoDB, defina a variável `MONGODB_URI` (padrão:
+`mongodb://localhost:27017/library`).
+
+A aplicação fica em `http://localhost:8080`.
+
+Para desenvolver o front-end com recarga automática, deixe o `bootRun` rodando e, em outro terminal:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+O Vite abre em `http://localhost:5173` e repassa as chamadas `/api` para o Spring Boot.
 
 ## Execução dos testes
 

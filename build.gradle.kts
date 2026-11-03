@@ -5,6 +5,7 @@ plugins {
     jacoco
     checkstyle
     id("com.diffplug.spotless") version "8.0.0"
+    id("com.github.node-gradle.node") version "7.1.0"
 }
 
 group = "br.ufmg"
@@ -47,8 +48,20 @@ spotless {
     }
     format("markdown") {
         target("**/*.md")
-        targetExclude("build/**", ".claude/**")
+        targetExclude("build/**", ".claude/**", "frontend/node_modules/**")
         prettier("3.6.2").config(mapOf("parser" to "markdown", "proseWrap" to "always", "printWidth" to 100))
+    }
+    format("frontend") {
+        target(
+            "frontend/**/*.ts",
+            "frontend/**/*.tsx",
+            "frontend/**/*.js",
+            "frontend/**/*.css",
+            "frontend/**/*.json",
+            "frontend/index.html",
+        )
+        targetExclude("frontend/node_modules/**", "frontend/dist/**", "frontend/package-lock.json")
+        prettier("3.6.2").configFile("frontend/.prettierrc.json")
     }
     format("misc") {
         target(".gitignore", ".githooks/*", ".github/**/*.yml", "config/**/*.xml")
@@ -65,6 +78,48 @@ val installGitHooks by tasks.registering(Exec::class) {
 
 tasks.compileJava {
     dependsOn(installGitHooks)
+}
+
+// Front-end: o Gradle baixa o Node e gera o build do Vite, que o Spring Boot serve como estático
+node {
+    version = "24.22.2"
+    download = true
+    nodeProjectDir = file("frontend")
+    npmInstallCommand = "ci"
+}
+
+val frontendSources =
+    files(
+        "frontend/src",
+        "frontend/public",
+        "frontend/index.html",
+        "frontend/package-lock.json",
+        "frontend/vite.config.ts",
+        "frontend/tsconfig.json",
+    )
+
+val buildFrontend by tasks.registering(com.github.gradle.node.npm.task.NpmTask::class) {
+    description = "Compila o front-end (tsc + vite build) em frontend/dist"
+    dependsOn(tasks.npmInstall)
+    args = listOf("run", "build")
+    inputs.files(frontendSources)
+    outputs.dir("frontend/dist")
+}
+
+val lintFrontend by tasks.registering(com.github.gradle.node.npm.task.NpmTask::class) {
+    description = "Roda o ESLint no front-end"
+    dependsOn(tasks.npmInstall)
+    args = listOf("run", "lint")
+    inputs.files(frontendSources, "frontend/eslint.config.js")
+    outputs.upToDateWhen { true }
+}
+
+tasks.processResources {
+    from(buildFrontend) { into("static") }
+}
+
+tasks.check {
+    dependsOn(lintFrontend)
 }
 
 checkstyle {

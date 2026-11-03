@@ -1,0 +1,11 @@
+# MongoDB local para desenvolvimento e testes: docker compose up -d
+services:
+  mongo:
+    image: mongo:8.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:
