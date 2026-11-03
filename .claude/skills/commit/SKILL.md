@@ -39,8 +39,9 @@ frequentes e com mensagens descritivas). Por isso cada commit é decidido junto 
 - **Escopo** entre parênteses: curto, em inglês, em **kebab-case** (`domain-model`,
   `pre-commit-hook`, `line-endings`). Não repetir o tipo no escopo (`ci(pipeline)`, não
   `ci(ci-pipeline)`).
-- **Descrição:** em português, começando com verbo na 3ª pessoa do presente e letra maiúscula (
-  "Adiciona", "Corrige", "Renomeia"), um pouco detalhada, sem ponto final.
+- **Descrição:** em português, começando com verbo na 3ª pessoa do presente e letra maiúscula
+  ("Adiciona", "Corrige", "Renomeia"), **curta**: resume o assunto, sem listar tecnologias ou
+  arquivos. Sem ponto final.
 - **Sem corpo** na mensagem, a menos que o autor peça.
 
 Exemplos do histórico:
@@ -53,20 +54,22 @@ ref(package-name): Renomeia o pacote base para br.ufmg.librarymanager
 fix(line-endings): Padroniza fim de linha LF em todos os sistemas operacionais
 test(services): Adiciona testes de unidade dos services com repositories mockados
 doc(test-skill): Adiciona skill com as convenções e boas práticas de teste do projeto
+feat(frontend): Adiciona esqueleto do front-end e MongoDB local
 ```
 
 ## 3. Como agrupar
 
 - **Coeso:** um commit = um assunto. Ex.: os 3 services juntos; os testes dos services juntos.
-- **Nem fragmentado demais:** não fazer um commit por arquivo ou por classe só para aumentar a
-  contagem. Nem gigante: não misturar código de produção, testes, CI e documentação no mesmo commit.
+- **Poucos commits:** não fazer um commit por arquivo ou por classe só para aumentar a contagem.
+  Mudanças de apoio (passo no CI, README, infra local, skill que documenta a convenção) que só
+  existem por causa de uma funcionalidade vão no **mesmo commit** dela.
 - **Ordem que compila:** cada commit deve compilar sozinho (ex.: exceções antes das entidades que as
   usam).
 - **Cobertura:** o `./gradlew check` exige 80%. Um commit de código de produção sem os testes pode
   ficar abaixo disso. O CI só roda no último commit de cada push, então isso é aceitável, mas
   **avise o autor** ao propor.
-- **Separar tipos:** produção (`feat`/`fix`/`ref`), testes (`test`), pipeline (`ci`) e documentação
-  (`doc`) em commits distintos quando fizer sentido.
+- **Separar só assuntos independentes:** ex.: código de produção (`feat`) e os testes de unidade
+  dele (`test`); uma mudança de pipeline que vale para o projeto todo (`ci`).
 
 ## 4. Fluxo
 

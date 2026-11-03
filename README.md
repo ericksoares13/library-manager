@@ -25,6 +25,7 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 - **React + TypeScript:** interface web, em `frontend/`.
 - **Vite:** servidor de desenvolvimento e build do front-end, servido pelo próprio Spring Boot.
 - **Motion:** animações da interface.
+- **Material Symbols (Google):** ícones da interface, no estilo Rounded (licença Apache 2.0).
 - **Gradle (Kotlin DSL):** build e gerenciamento de dependências.
 - **JUnit 5:** testes de unidade.
 - **JaCoCo:** medição da cobertura de testes.
@@ -37,6 +38,12 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 - **Claude Code (Anthropic):** assistente de programação usado no terminal para estruturar o
   projeto, auxiliar na escrita do código e da documentação. Todo o código gerado foi revisado pelo
   autor.
+- **Skills do Claude Code** (`.claude/skills/`): instruções que orientam o assistente neste projeto.
+  - `tests`: convenções e boas práticas de teste, baseadas no curso de Teste de Software do Prof.
+    André Hora (DCC/UFMG).
+  - `commit`: padrão de mensagens e fluxo de commits do projeto.
+  - `apple-design`: princípios de interface e animação da Apple para a web, de
+    [Emil Kowalski](https://github.com/emilkowalski/skills) (licença MIT).
 
 ## Execução da aplicação
 

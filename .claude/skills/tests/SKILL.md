@@ -1,6 +1,6 @@
 ---
 name: tests
-description: Escrever, revisar e refatorar testes do library-manager seguindo o curso de Teste de Software (Prof. André Hora, DCC/UFMG) e as convenções do projeto — padrão AAA (// Arrange, // Act, // Assert), nomes given_when_then, Assertions do JUnit 5 qualificado, princípios FIRST e catálogo de test smells. Use sempre que for criar ou alterar qualquer teste (unidade, integração ou e2e), revisar a suíte ou analisar cobertura.
+description: Escrever, revisar e refatorar testes do library-manager seguindo o curso de Teste de Software (Prof. André Hora, DCC/UFMG) e as convenções do projeto — padrão AAA (// Arrange, // Act, // Assert), nomes given_when_then, Assertions do JUnit 5 qualificado, Vitest + Testing Library no front, princípios FIRST e catálogo de test smells. Use sempre que for criar ou alterar qualquer teste (unidade, integração ou e2e), revisar a suíte ou analisar cobertura.
 ---
 
 # Skill: Teste de Software (library-manager)
@@ -30,7 +30,7 @@ precisa cumprir:
 **Stack de testes:**
 
 - **Back (Java 25 + Spring Boot 4):** JUnit 5 (Jupiter), Mockito, JaCoCo.
-- **Front (React + TypeScript):** Vitest + Testing Library (a configurar).
+- **Front (React + TypeScript):** Vitest + Testing Library (ver seção 2.10).
 - **E2E:** Playwright em TypeScript (a configurar).
 
 **Onde ficam os testes:** `src/test/java/br/ufmg/librarymanager/`, espelhando `src/main`. Um arquivo
@@ -268,6 +268,40 @@ Referência: `controller/BookControllerTest.java`.
 - **404 e 409 uma vez por controller:** o mapeamento exceção → status já tem teste no
   `GlobalExceptionHandlerTest`; aqui basta provar que o controller está ligado a ele.
 
+### 2.10 Testes do front (Vitest + Testing Library)
+
+As seções 2.1 a 2.9 são do Java. No front valem os **mesmos princípios** (AAA, uma ação no Act,
+FIRST, sem redundância, cada caminho de erro testado), adaptados às ferramentas:
+
+```tsx
+describe("Lista de livros", () => {
+  it("mostra os livros cadastrados", async () => {
+    // Arrange
+    mockFetch([book("Dom Casmurro")]);
+
+    // Act
+    render(<BooksPage />);
+
+    // Assert
+    expect(await screen.findByText("Dom Casmurro")).toBeInTheDocument();
+  });
+});
+```
+
+- **Nome:** frase curta em português no `it(...)` (faz o papel do `@DisplayName`); o `describe` é o
+  assunto. Sem `given_when_then`: o relatório do Vitest mostra a frase.
+- **Estrutura:** `// Arrange`, `// Act`, `// Assert`, com uma única ação no Act (um `render` ou uma
+  interação do usuário).
+- **Asserções:** `expect` do Vitest com os matchers do `@testing-library/jest-dom`
+  (`toBeInTheDocument`, `toBeDisabled`...).
+- **Buscas na tela:** por papel e texto visível, como o usuário enxerga a página
+  (`getByRole("button", { name: "Adicionar" })`, `getByLabelText("Título")`). Nunca por classe CSS.
+- **Interação:** `@testing-library/user-event` (`await user.click(...)`), não `fireEvent`.
+- **Mocks:** só o `fetch` (a fronteira com a API), nunca os componentes do próprio front.
+- **Funções puras** (validação, formatação) têm teste de unidade próprio, sem `render`; os testes de
+  tela não repetem cada caso delas. `it.each` segue as regras da seção 2.8.
+- **Arquivo:** ao lado do código, `BooksPage.tsx` → `BooksPage.test.tsx`.
+
 ---
 
 ## 3. Checklist ao escrever um teste
@@ -385,6 +419,5 @@ smells do catálogo:
    mock, várias entradas da mesma classe de equivalência. Proponha juntar ou remover.
 6. Sugira melhorias concretas com o código corrigido.
 
-**Front e e2e (Vitest e Playwright):** ainda não configurados. Antes de escrever o primeiro teste
-nessas ferramentas, **confirme com o autor** se o padrão `given_when_then` + AAA vale do mesmo jeito
-e como adaptar as asserções (`expect(...)`).
+**E2E (Playwright):** ainda não configurado. Antes de escrever o primeiro teste, **confirme com o
+autor** se o padrão da seção 2.10 vale do mesmo jeito.
