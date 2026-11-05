@@ -86,6 +86,10 @@ h2 {
   padding: 0.125rem;
   background: var(--fill);
   border-radius: 0.5rem;
+  /* O arraste horizontal da pílula fica com a página; a rolagem vertical continua no toque */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .tabs ul {
