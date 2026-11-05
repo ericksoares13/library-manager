@@ -1,9 +1,11 @@
 spring:
   application:
     name: library-manager
+  # Spring Boot 4: a conexão fica em spring.mongodb (spring.data.mongodb.uri não é mais lido)
+  mongodb:
+    uri: ${MONGODB_URI:mongodb://localhost:27017/library}
   data:
     mongodb:
-      uri: ${MONGODB_URI:mongodb://localhost:27017/library}
       auto-index-creation: true
 
 server:
