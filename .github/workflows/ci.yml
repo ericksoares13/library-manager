@@ -3,6 +3,8 @@ name: CI
 on:
   push:
   pull_request:
+  # Botão "Run workflow" na aba Actions: roda o pipeline inteiro e, no fim, o deploy
+  workflow_dispatch:
 
 jobs:
   lint:
@@ -72,3 +74,29 @@ jobs:
           files: build/reports/jacoco/test/jacocoTestReport.xml,frontend/coverage/lcov.info
           flags: ${{ matrix.os }}
           fail_ci_if_error: true
+
+  package:
+    name: Package (Docker image)
+    needs: tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Build Docker image
+        run: docker build -t library-manager .
+
+  deploy:
+    name: Deploy (Render)
+    needs: package
+    # Só pelo botão manual, e só a partir da main
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+
+    steps:
+      - name: Trigger Render deploy
+        run: curl --fail --silent --show-error --request POST "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"

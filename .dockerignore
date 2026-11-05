@@ -1,0 +1,11 @@
+# Só o necessário para o build entra no contexto do Docker
+.git
+.gradle
+.idea
+.claude
+build
+frontend/node_modules
+frontend/dist
+frontend/coverage
+frontend/*.tsbuildinfo
+CLAUDE.md

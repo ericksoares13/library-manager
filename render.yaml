@@ -1,0 +1,16 @@
+# Blueprint do Render: cria o serviço a partir deste arquivo (New → Blueprint)
+services:
+  - type: web
+    name: library-manager
+    runtime: docker
+    plan: free
+    # Mais perto do cluster do Atlas (AWS us-east-1)
+    region: virginia
+    branch: main
+    healthCheckPath: /
+    # Deploy só pelo botão do CI (job "deploy"), não a cada push
+    autoDeployTrigger: off
+    envVars:
+      # Connection string do Atlas: informada no painel do Render, nunca no repositório
+      - key: MONGODB_URI
+        sync: false
