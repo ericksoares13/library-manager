@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -92,5 +94,21 @@ class GlobalExceptionHandlerTest {
 
         // Assert
         Assertions.assertEquals(new ApiError("Invalid request"), response.getBody());
+    }
+
+    @Test
+    @DisplayName("Corpo ilegível responde 400 com mensagem padrão")
+    void givenUnreadableBody_whenHandle_thenRespondsWith400() {
+        // Arrange
+        final HttpMessageNotReadableException exception =
+                new HttpMessageNotReadableException(
+                        "JSON parse error", new MockHttpInputMessage(new byte[0]));
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleUnreadableBody(exception);
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertEquals(new ApiError("Malformed request body"), response.getBody());
     }
 }
