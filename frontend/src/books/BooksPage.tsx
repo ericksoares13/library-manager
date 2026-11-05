@@ -1,20 +1,13 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useState } from "react";
 import { booksApi, type Book } from "../api/books";
+import { ConfirmDeleteDialog } from "../components/ConfirmDeleteDialog";
 import { AddIcon, DeleteIcon, EditIcon, MenuBookIcon, SearchIcon } from "../components/icons";
 import { settle } from "../components/motion";
+import { matches } from "../components/search";
 import { BookFormSheet } from "./BookFormSheet";
-import { DeleteBookDialog } from "./DeleteBookDialog";
 
 type Editing = { book?: Book } | null;
-
-// Busca sem diferenciar maiúsculas nem acentos ("memorias" encontra "Memórias")
-const normalize = (text: string) =>
-  text
-    .normalize("NFD")
-    .replace(/\p{Diacritic}/gu, "")
-    .toLowerCase()
-    .trim();
 
 function availabilityLabel(book: Book) {
   return book.availableCopies === 0
@@ -63,7 +56,7 @@ export function BooksPage() {
   }
 
   const visibleBooks = (books ?? []).filter((book) =>
-    [book.title, book.author, book.isbn].some((text) => normalize(text).includes(normalize(query))),
+    matches(query, book.title, book.author, book.isbn),
   );
 
   return (
@@ -173,11 +166,13 @@ export function BooksPage() {
           />
         )}
         {deleting && (
-          <DeleteBookDialog
+          <ConfirmDeleteDialog
             key="delete"
-            book={deleting}
+            name={deleting.title}
+            conflictMessage="Este livro tem empréstimos ativos e não pode ser excluído."
+            errorMessage="Não foi possível excluir o livro. Tente novamente."
+            onConfirm={() => booksApi.remove(deleting.id).then(() => handleDeleted(deleting.id))}
             onClose={() => setDeleting(null)}
-            onDeleted={handleDeleted}
           />
         )}
       </AnimatePresence>

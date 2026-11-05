@@ -19,3 +19,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }
+
+/** Opções de uma requisição com corpo JSON. */
+export const json = (method: string, body: unknown): RequestInit => ({
+  method,
+  body: JSON.stringify(body),
+});

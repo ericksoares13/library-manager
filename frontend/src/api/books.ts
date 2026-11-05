@@ -1,4 +1,4 @@
-import { request } from "./client";
+import { json, request } from "./client";
 
 export type Book = {
   id: string;
@@ -10,11 +10,6 @@ export type Book = {
 };
 
 export type BookInput = Pick<Book, "title" | "author" | "isbn" | "totalCopies">;
-
-const json = (method: string, body: unknown): RequestInit => ({
-  method,
-  body: JSON.stringify(body),
-});
 
 export const booksApi = {
   list: () => request<Book[]>("/api/books"),
