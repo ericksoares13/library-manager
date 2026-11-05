@@ -80,9 +80,8 @@ banco no [MongoDB Atlas](https://www.mongodb.com/atlas) (cluster M0 gratuito).
 
 - O serviço é descrito em `render.yaml` e a connection string do Atlas fica só no painel do Render,
   na variável `MONGODB_URI`.
-- A cada push, o CI gera a imagem Docker (job `package`) para garantir que ela continua compilando.
 - O deploy é manual: na aba **Actions** do GitHub, **CI → Run workflow** roda o pipeline inteiro e,
-  se tudo passar, o job `deploy` publica a versão da `main` no Render.
+  se tudo passar, o job `deploy` pede ao Render que publique a versão da `main`.
 
 Para gerar e rodar a imagem localmente (com o MongoDB do `docker compose`):
 

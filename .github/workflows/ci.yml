@@ -40,7 +40,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
     defaults:
       run:
         shell: bash
@@ -75,27 +75,12 @@ jobs:
           flags: ${{ matrix.os }}
           fail_ci_if_error: true
 
-  package:
-    name: Package (Docker image)
-    needs: tests
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Build Docker image
-        run: docker build -t library-manager .
-
   deploy:
     name: Deploy (Render)
-    needs: package
+    needs: tests
     # Só pelo botão manual, e só a partir da main
     if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
-    environment:
-      name: production
-      url: ${{ vars.APP_URL }}
 
     steps:
       - name: Trigger Render deploy
