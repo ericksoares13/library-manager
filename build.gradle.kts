@@ -60,7 +60,12 @@ spotless {
             "frontend/**/*.json",
             "frontend/index.html",
         )
-        targetExclude("frontend/node_modules/**", "frontend/dist/**", "frontend/package-lock.json")
+        targetExclude(
+            "frontend/node_modules/**",
+            "frontend/dist/**",
+            "frontend/coverage/**",
+            "frontend/package-lock.json",
+        )
         prettier("3.6.2").configFile("frontend/.prettierrc.json")
     }
     format("misc") {
@@ -114,12 +119,20 @@ val lintFrontend by tasks.registering(com.github.gradle.node.npm.task.NpmTask::c
     outputs.upToDateWhen { true }
 }
 
+val testFrontend by tasks.registering(com.github.gradle.node.npm.task.NpmTask::class) {
+    description = "Roda os testes do front-end (Vitest) com cobertura em frontend/coverage"
+    dependsOn(tasks.npmInstall)
+    args = listOf("run", "test")
+    inputs.files(frontendSources)
+    outputs.dir("frontend/coverage")
+}
+
 tasks.processResources {
     from(buildFrontend) { into("static") }
 }
 
 tasks.check {
-    dependsOn(lintFrontend)
+    dependsOn(lintFrontend, testFrontend)
 }
 
 checkstyle {

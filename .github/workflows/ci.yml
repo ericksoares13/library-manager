@@ -62,10 +62,13 @@ jobs:
       - name: Coverage report and verification
         run: ./gradlew jacocoTestReport jacocoTestCoverageVerification
 
+      - name: Front-end tests (Vitest)
+        run: ./gradlew testFrontend
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          files: build/reports/jacoco/test/jacocoTestReport.xml
+          files: build/reports/jacoco/test/jacocoTestReport.xml,frontend/coverage/lcov.info
           flags: ${{ matrix.os }}
           fail_ci_if_error: true

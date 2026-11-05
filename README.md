@@ -27,7 +27,8 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 - **Motion:** animações da interface.
 - **Material Symbols (Google):** ícones da interface, no estilo Rounded (licença Apache 2.0).
 - **Gradle (Kotlin DSL):** build e gerenciamento de dependências.
-- **JUnit 5:** testes de unidade.
+- **JUnit 5:** testes de unidade do back-end.
+- **Vitest + Testing Library:** testes do front-end, simulando o uso da tela.
 - **JaCoCo:** medição da cobertura de testes.
 - **GitHub Actions:** integração contínua, com testes rodando em Linux, macOS e Windows a cada
   commit.
@@ -74,16 +75,20 @@ O Vite abre em `http://localhost:5173` e repassa as chamadas `/api` para o Sprin
 
 ## Execução dos testes
 
-Pré-requisito: JDK 25 instalado. O Gradle Wrapper baixa o Gradle automaticamente.
+Pré-requisito: JDK 25 instalado. O Gradle Wrapper baixa o Gradle e o Node.js automaticamente.
 
 ```bash
-# Executar os testes
+# Back-end (JUnit) com relatório de cobertura
 ./gradlew test
 
-# Executar os testes e gerar o relatório de cobertura
-./gradlew test jacocoTestReport
+# Front-end (Vitest) com relatório de cobertura
+./gradlew testFrontend
+
+# Tudo: formatação, lint, testes e verificação de cobertura mínima (80%)
+./gradlew check
 ```
 
 No Windows, use `gradlew.bat` no lugar de `./gradlew`.
 
-O relatório de cobertura fica em `build/reports/jacoco/test/html/index.html`.
+Os relatórios de cobertura ficam em `build/reports/jacoco/test/html/index.html` (back-end) e
+`frontend/coverage/index.html` (front-end).
