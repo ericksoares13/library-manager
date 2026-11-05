@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -36,5 +37,12 @@ public class GlobalExceptionHandler {
                         .collect(Collectors.joining("; "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiError(message.isEmpty() ? "Invalid request" : message));
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiError> handleUnreadableBody(final HttpMessageNotReadableException ex) {
+        // JSON malformado ou com tipo errado (ex.: texto em campo numérico)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("Malformed request body"));
     }
 }
