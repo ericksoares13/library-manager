@@ -14,6 +14,11 @@ public class Book {
 
     private String author;
 
+    // Chaves de busca e ordenação (ver SearchKey), recalculadas sempre que título ou autor mudam
+    @Indexed private String titleKey;
+
+    @Indexed private String authorKey;
+
     @Indexed(unique = true)
     private String isbn;
 
@@ -27,6 +32,7 @@ public class Book {
         requireAtLeastOneCopy(totalCopies);
         this.title = title;
         this.author = author;
+        this.updateKeys();
         this.isbn = isbn;
         this.totalCopies = totalCopies;
         this.availableCopies = totalCopies;
@@ -43,6 +49,7 @@ public class Book {
         this.author = author;
         this.totalCopies = totalCopies;
         this.availableCopies = totalCopies - borrowedCopies;
+        this.updateKeys();
     }
 
     public void borrowCopy() {
@@ -79,6 +86,14 @@ public class Book {
         return this.author;
     }
 
+    public String getTitleKey() {
+        return this.titleKey;
+    }
+
+    public String getAuthorKey() {
+        return this.authorKey;
+    }
+
     public String getIsbn() {
         return this.isbn;
     }
@@ -89,6 +104,11 @@ public class Book {
 
     public int getAvailableCopies() {
         return this.availableCopies;
+    }
+
+    private void updateKeys() {
+        this.titleKey = SearchKey.of(this.title);
+        this.authorKey = SearchKey.of(this.author);
     }
 
     private static void requireAtLeastOneCopy(final int totalCopies) {

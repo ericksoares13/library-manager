@@ -16,16 +16,21 @@ public class Member {
     @Indexed(unique = true)
     private String email;
 
+    // Chave de busca e ordenação do nome (ver SearchKey), recalculada sempre que o nome muda
+    @Indexed private String nameKey;
+
     protected Member() {}
 
     public Member(final String name, final String email) {
         this.name = name;
         this.email = email;
+        this.nameKey = SearchKey.of(name);
     }
 
     public void updateDetails(final String name, final String email) {
         this.name = name;
         this.email = email;
+        this.nameKey = SearchKey.of(name);
     }
 
     public String getId() {
@@ -38,5 +43,9 @@ public class Member {
 
     public String getEmail() {
         return this.email;
+    }
+
+    public String getNameKey() {
+        return this.nameKey;
     }
 }

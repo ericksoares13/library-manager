@@ -13,8 +13,8 @@ class BookTest {
     }
 
     @Test
-    @DisplayName("Livro novo começa com todos os exemplares disponíveis")
-    void givenValidData_whenCreateBook_thenAllCopiesAreAvailable() {
+    @DisplayName("Livro novo começa com todos os exemplares disponíveis e com as chaves de busca")
+    void givenValidData_whenCreateBook_thenAllCopiesAreAvailableAndSearchKeysAreSet() {
         // Arrange
         final int totalCopies = 3;
 
@@ -24,6 +24,8 @@ class BookTest {
         // Assert
         Assertions.assertEquals(totalCopies, book.getAvailableCopies());
         Assertions.assertEquals(0, book.getBorrowedCopies());
+        Assertions.assertEquals(SearchKey.of(book.getTitle()), book.getTitleKey());
+        Assertions.assertEquals(SearchKey.of(book.getAuthor()), book.getAuthorKey());
     }
 
     @Test
@@ -114,8 +116,8 @@ class BookTest {
     }
 
     @Test
-    @DisplayName("Atualiza título e autor")
-    void givenNewTitleAndAuthor_whenUpdateDetails_thenBookIsUpdated() {
+    @DisplayName("Atualiza título e autor junto com as chaves de busca")
+    void givenNewTitleAndAuthor_whenUpdateDetails_thenBookAndSearchKeysAreUpdated() {
         // Arrange
         final Book book = bookWithCopies(2);
 
@@ -125,6 +127,8 @@ class BookTest {
         // Assert
         Assertions.assertEquals("Memórias Póstumas de Brás Cubas", book.getTitle());
         Assertions.assertEquals("Machado", book.getAuthor());
+        Assertions.assertEquals(SearchKey.of(book.getTitle()), book.getTitleKey());
+        Assertions.assertEquals(SearchKey.of(book.getAuthor()), book.getAuthorKey());
     }
 
     @Test
