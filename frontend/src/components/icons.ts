@@ -1,5 +1,7 @@
 // Material Symbols Rounded, peso 300, sem preenchimento (ver a seção de ícones da skill apple-design)
 export { default as AddIcon } from "@material-symbols/svg-300/rounded/add.svg?react";
+export { default as CheckIcon } from "@material-symbols/svg-300/rounded/check.svg?react";
+export { default as UnfoldMoreIcon } from "@material-symbols/svg-300/rounded/unfold_more.svg?react";
 export { default as ChevronLeftIcon } from "@material-symbols/svg-300/rounded/chevron_left.svg?react";
 export { default as ChevronRightIcon } from "@material-symbols/svg-300/rounded/chevron_right.svg?react";
 export { default as CloseIcon } from "@material-symbols/svg-300/rounded/close.svg?react";
