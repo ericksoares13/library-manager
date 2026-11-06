@@ -1,6 +1,7 @@
 package br.ufmg.librarymanager.controller;
 
 import br.ufmg.librarymanager.dto.BookRequest;
+import br.ufmg.librarymanager.dto.BookSort;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Book;
@@ -15,6 +16,8 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -75,11 +78,38 @@ class BookControllerTest {
     }
 
     @Test
-    @DisplayName("Lista os livros")
-    void givenRegisteredBooks_whenGetBooks_thenRespondsWithAllBooks() throws Exception {
+    @DisplayName("Lista a página pedida com a busca e a ordem")
+    void givenQuerySortAndPage_whenGetBooks_thenRespondsWithThatPage() throws Exception {
         // Arrange
-        Mockito.when(this.bookService.findAll())
-                .thenReturn(List.of(bookWithId("b1"), bookWithId("b2")));
+        Mockito.when(this.bookService.search("machado", BookSort.AUTHOR, 1, 5))
+                .thenReturn(
+                        new PageImpl<>(
+                                List.of(bookWithId("b6"), bookWithId("b7")),
+                                PageRequest.of(1, 5),
+                                7));
+
+        // Act
+        final MockHttpServletResponse response =
+                this.perform(
+                        MockMvcRequestBuilders.get(
+                                "/api/books?q=machado&sort=AUTHOR&page=1&size=5"));
+
+        // Assert
+        final String json = body(response);
+        Assertions.assertEquals(HttpStatus.OK.value(), response.getStatus());
+        Assertions.assertEquals(List.of("b6", "b7"), JsonPath.read(json, "$.items[*].id"));
+        Assertions.assertEquals(1, (int) JsonPath.read(json, "$.page"));
+        Assertions.assertEquals(5, (int) JsonPath.read(json, "$.size"));
+        Assertions.assertEquals(7, (int) JsonPath.read(json, "$.totalItems"));
+        Assertions.assertEquals(2, (int) JsonPath.read(json, "$.totalPages"));
+    }
+
+    @Test
+    @DisplayName("Sem parâmetros lista a primeira página por título")
+    void givenNoParameters_whenGetBooks_thenUsesTheDefaults() throws Exception {
+        // Arrange
+        Mockito.when(this.bookService.search("", BookSort.TITLE, 0, 20))
+                .thenReturn(new PageImpl<>(List.of(bookWithId("b1"))));
 
         // Act
         final MockHttpServletResponse response =
@@ -87,7 +117,23 @@ class BookControllerTest {
 
         // Assert
         Assertions.assertEquals(HttpStatus.OK.value(), response.getStatus());
-        Assertions.assertEquals(List.of("b1", "b2"), JsonPath.read(body(response), "$[*].id"));
+        Assertions.assertEquals(List.of("b1"), JsonPath.read(body(response), "$.items[*].id"));
+    }
+
+    @Test
+    @DisplayName("Ordenação desconhecida responde 400 sem chamar o serviço")
+    void givenUnknownSort_whenGetBooks_thenRespondsWith400() throws Exception {
+        // Arrange
+        final String url = "/api/books?sort=FOO";
+
+        // Act
+        final MockHttpServletResponse response = this.perform(MockMvcRequestBuilders.get(url));
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatus());
+        Assertions.assertEquals(
+                "Invalid value for parameter sort", JsonPath.read(body(response), "$.message"));
+        Mockito.verifyNoInteractions(this.bookService);
     }
 
     @Test

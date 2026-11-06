@@ -1,11 +1,13 @@
 package br.ufmg.librarymanager.service;
 
 import br.ufmg.librarymanager.dto.BookRequest;
+import br.ufmg.librarymanager.dto.BookSort;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Book;
 import br.ufmg.librarymanager.repository.BookRepository;
 import br.ufmg.librarymanager.repository.LoanRepository;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,10 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @DisplayName("Serviço de livros")
 @ExtendWith(MockitoExtension.class)
@@ -170,5 +176,39 @@ class BookServiceTest {
         // Assert
         Assertions.assertEquals("A book with active loans cannot be deleted", thrown.getMessage());
         Mockito.verify(this.bookRepository, Mockito.never()).delete(ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Busca em branco lista todos os livros na ordem pedida")
+    void givenBlankQuery_whenSearch_thenListsAllWithTheSort() {
+        // Arrange
+        final Page<Book> page = new PageImpl<>(List.of(existingBook()));
+        Mockito.when(this.bookRepository.findAll(PageRequest.of(1, 20, BookSort.AUTHOR.toSort())))
+                .thenReturn(page);
+
+        // Act
+        final Page<Book> result = this.bookService.search("  ", BookSort.AUTHOR, 1, 20);
+
+        // Assert
+        Assertions.assertSame(page, result);
+    }
+
+    @Test
+    @DisplayName("Busca no título, no autor e no ISBN sem diferenciar acentos")
+    void givenQueryWithAccentsAndCase_whenSearch_thenUsesTheNormalizedKey() {
+        // Arrange
+        final Pageable pageable = PageRequest.of(0, 20, BookSort.TITLE.toSort());
+        final Page<Book> page = new PageImpl<>(List.of(existingBook()));
+        Mockito.when(
+                        this.bookRepository
+                                .findByTitleKeyContainingOrAuthorKeyContainingOrIsbnContaining(
+                                        "memorias", "memorias", "memorias", pageable))
+                .thenReturn(page);
+
+        // Act
+        final Page<Book> result = this.bookService.search(" Memórias ", BookSort.TITLE, 0, 20);
+
+        // Assert
+        Assertions.assertSame(page, result);
     }
 }

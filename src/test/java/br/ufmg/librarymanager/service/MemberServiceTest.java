@@ -1,11 +1,13 @@
 package br.ufmg.librarymanager.service;
 
 import br.ufmg.librarymanager.dto.MemberRequest;
+import br.ufmg.librarymanager.dto.MemberSort;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Member;
 import br.ufmg.librarymanager.repository.LoanRepository;
 import br.ufmg.librarymanager.repository.MemberRepository;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +18,10 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 @DisplayName("Serviço de membros")
 @ExtendWith(MockitoExtension.class)
@@ -191,5 +197,40 @@ class MemberServiceTest {
         Assertions.assertEquals(
                 "A member with active loans cannot be deleted", thrown.getMessage());
         Mockito.verify(this.memberRepository, Mockito.never()).delete(ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Busca em branco lista todos os membros na ordem pedida")
+    void givenBlankQuery_whenSearch_thenListsAllWithTheSort() {
+        // Arrange
+        final Page<Member> page = new PageImpl<>(List.of(new Member("Ana", EMAIL)));
+        Mockito.when(
+                        this.memberRepository.findAll(
+                                PageRequest.of(0, 20, MemberSort.RECENT.toSort())))
+                .thenReturn(page);
+
+        // Act
+        final Page<Member> result = this.memberService.search("", MemberSort.RECENT, 0, 20);
+
+        // Assert
+        Assertions.assertSame(page, result);
+    }
+
+    @Test
+    @DisplayName("Busca no nome e no e-mail sem diferenciar acentos")
+    void givenQueryWithAccentsAndCase_whenSearch_thenUsesTheNormalizedKey() {
+        // Arrange
+        final Pageable pageable = PageRequest.of(0, 20, MemberSort.NAME.toSort());
+        final Page<Member> page = new PageImpl<>(List.of(new Member("Érico", EMAIL)));
+        Mockito.when(
+                        this.memberRepository.findByNameKeyContainingOrEmailContainingIgnoreCase(
+                                "erico", "erico", pageable))
+                .thenReturn(page);
+
+        // Act
+        final Page<Member> result = this.memberService.search("ÉRICO", MemberSort.NAME, 0, 20);
+
+        // Assert
+        Assertions.assertSame(page, result);
     }
 }

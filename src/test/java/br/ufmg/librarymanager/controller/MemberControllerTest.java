@@ -1,6 +1,7 @@
 package br.ufmg.librarymanager.controller;
 
 import br.ufmg.librarymanager.dto.MemberRequest;
+import br.ufmg.librarymanager.dto.MemberSort;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Member;
@@ -15,6 +16,8 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -73,11 +76,33 @@ class MemberControllerTest {
     }
 
     @Test
-    @DisplayName("Lista os membros")
-    void givenRegisteredMembers_whenGetMembers_thenRespondsWithAllMembers() throws Exception {
+    @DisplayName("Lista a página pedida com a busca e a ordem")
+    void givenQuerySortAndPage_whenGetMembers_thenRespondsWithThatPage() throws Exception {
         // Arrange
-        Mockito.when(this.memberService.findAll())
-                .thenReturn(List.of(memberWithId("m1"), memberWithId("m2")));
+        Mockito.when(this.memberService.search("ana", MemberSort.EMAIL, 2, 10))
+                .thenReturn(
+                        new PageImpl<>(List.of(memberWithId("m21")), PageRequest.of(2, 10), 21));
+
+        // Act
+        final MockHttpServletResponse response =
+                this.perform(
+                        MockMvcRequestBuilders.get("/api/members?q=ana&sort=EMAIL&page=2&size=10"));
+
+        // Assert
+        final String json = body(response);
+        Assertions.assertEquals(HttpStatus.OK.value(), response.getStatus());
+        Assertions.assertEquals(List.of("m21"), JsonPath.read(json, "$.items[*].id"));
+        Assertions.assertEquals(2, (int) JsonPath.read(json, "$.page"));
+        Assertions.assertEquals(21, (int) JsonPath.read(json, "$.totalItems"));
+        Assertions.assertEquals(3, (int) JsonPath.read(json, "$.totalPages"));
+    }
+
+    @Test
+    @DisplayName("Sem parâmetros lista a primeira página por nome")
+    void givenNoParameters_whenGetMembers_thenUsesTheDefaults() throws Exception {
+        // Arrange
+        Mockito.when(this.memberService.search("", MemberSort.NAME, 0, 20))
+                .thenReturn(new PageImpl<>(List.of(memberWithId("m1"))));
 
         // Act
         final MockHttpServletResponse response =
@@ -85,7 +110,7 @@ class MemberControllerTest {
 
         // Assert
         Assertions.assertEquals(HttpStatus.OK.value(), response.getStatus());
-        Assertions.assertEquals(List.of("m1", "m2"), JsonPath.read(body(response), "$[*].id"));
+        Assertions.assertEquals(List.of("m1"), JsonPath.read(body(response), "$.items[*].id"));
     }
 
     @Test

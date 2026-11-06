@@ -1,12 +1,15 @@
 package br.ufmg.librarymanager.service;
 
 import br.ufmg.librarymanager.dto.BookRequest;
+import br.ufmg.librarymanager.dto.BookSort;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Book;
+import br.ufmg.librarymanager.model.SearchKey;
 import br.ufmg.librarymanager.repository.BookRepository;
 import br.ufmg.librarymanager.repository.LoanRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,8 +24,19 @@ public class BookService {
         this.loanRepository = loanRepository;
     }
 
-    public List<Book> findAll() {
-        return this.bookRepository.findAll();
+    /**
+     * Página da listagem. A busca (`query`) ignora maiúsculas e acentos e procura no título, no
+     * autor e no ISBN; em branco, lista todos.
+     */
+    public Page<Book> search(
+            final String query, final BookSort sort, final int page, final int size) {
+        final Pageable pageable = Pages.of(page, size, sort.toSort());
+        final String key = SearchKey.of(query);
+        if (key.isEmpty()) {
+            return this.bookRepository.findAll(pageable);
+        }
+        return this.bookRepository.findByTitleKeyContainingOrAuthorKeyContainingOrIsbnContaining(
+                key, key, key, pageable);
     }
 
     public Book findById(final String id) {

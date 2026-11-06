@@ -1,12 +1,15 @@
 package br.ufmg.librarymanager.service;
 
 import br.ufmg.librarymanager.dto.MemberRequest;
+import br.ufmg.librarymanager.dto.MemberSort;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Member;
+import br.ufmg.librarymanager.model.SearchKey;
 import br.ufmg.librarymanager.repository.LoanRepository;
 import br.ufmg.librarymanager.repository.MemberRepository;
-import java.util.List;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,8 +25,19 @@ public class MemberService {
         this.loanRepository = loanRepository;
     }
 
-    public List<Member> findAll() {
-        return this.memberRepository.findAll();
+    /**
+     * Página da listagem. A busca (`query`) ignora maiúsculas e acentos no nome e maiúsculas no
+     * e-mail; em branco, lista todos.
+     */
+    public Page<Member> search(
+            final String query, final MemberSort sort, final int page, final int size) {
+        final Pageable pageable = Pages.of(page, size, sort.toSort());
+        final String key = SearchKey.of(query);
+        if (key.isEmpty()) {
+            return this.memberRepository.findAll(pageable);
+        }
+        return this.memberRepository.findByNameKeyContainingOrEmailContainingIgnoreCase(
+                key, key, pageable);
     }
 
     public Member findById(final String id) {
