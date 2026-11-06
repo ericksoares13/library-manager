@@ -195,15 +195,22 @@ h2 {
     opacity 100ms ease-out;
 }
 
-.button:active,
-.icon-button:active {
+.button:active:not(:disabled),
+.icon-button:active:not(:disabled) {
   transform: scale(0.97);
   opacity: 0.8;
 }
 
-.button:disabled {
+/* Desabilitado fica no lugar (os vizinhos não pulam), apagado e sem resposta ao toque/hover */
+.button:disabled,
+.icon-button:disabled {
   cursor: default;
   opacity: 0.5;
+}
+
+/* Só o ícone: com metade da opacidade ainda parece ativo, então apaga mais */
+.icon-button:disabled {
+  opacity: 0.3;
 }
 
 .button.primary {
@@ -233,7 +240,7 @@ h2 {
     background-color 100ms ease-out;
 }
 
-.icon-button:hover {
+.icon-button:hover:not(:disabled) {
   color: var(--text);
   background: var(--fill);
 }
