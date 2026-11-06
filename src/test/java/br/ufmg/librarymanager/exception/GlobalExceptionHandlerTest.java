@@ -14,6 +14,7 @@ import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @DisplayName("Tratamento de erros da API")
 class GlobalExceptionHandlerTest {
@@ -94,6 +95,22 @@ class GlobalExceptionHandlerTest {
 
         // Assert
         Assertions.assertEquals(new ApiError("Invalid request"), response.getBody());
+    }
+
+    @Test
+    @DisplayName("Parâmetro da URL com valor inválido responde 400 com o nome dele")
+    void givenTypeMismatch_whenHandle_thenRespondsWith400NamingTheParameter() {
+        // Arrange
+        final MethodArgumentTypeMismatchException exception =
+                new MethodArgumentTypeMismatchException("FOO", Object.class, "sort", null, null);
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleTypeMismatch(exception);
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertEquals(
+                new ApiError("Invalid value for parameter sort"), response.getBody());
     }
 
     @Test

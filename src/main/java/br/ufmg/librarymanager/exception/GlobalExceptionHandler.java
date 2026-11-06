@@ -9,6 +9,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -37,6 +38,14 @@ public class GlobalExceptionHandler {
                         .collect(Collectors.joining("; "));
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ApiError(message.isEmpty() ? "Invalid request" : message));
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiError> handleTypeMismatch(
+            final MethodArgumentTypeMismatchException ex) {
+        // Parâmetro da URL com valor que não converte (ex.: sort=FOO, page=abc)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ApiError("Invalid value for parameter " + ex.getName()));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
