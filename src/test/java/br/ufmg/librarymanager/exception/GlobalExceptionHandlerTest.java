@@ -84,20 +84,6 @@ class GlobalExceptionHandlerTest {
     }
 
     @Test
-    @DisplayName("Validação sem erros de campo usa mensagem genérica")
-    void givenNoFieldErrors_whenHandleValidation_thenUsesGenericMessage()
-            throws NoSuchMethodException {
-        // Arrange
-        final MethodArgumentNotValidException exception = invalidRequest();
-
-        // Act
-        final ResponseEntity<ApiError> response = this.handler.handleValidation(exception);
-
-        // Assert
-        Assertions.assertEquals(new ApiError("Invalid request"), response.getBody());
-    }
-
-    @Test
     @DisplayName("Parâmetro da URL com valor inválido responde 400 com o nome dele")
     void givenTypeMismatch_whenHandle_thenRespondsWith400NamingTheParameter() {
         // Arrange

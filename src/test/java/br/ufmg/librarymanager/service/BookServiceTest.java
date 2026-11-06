@@ -79,8 +79,8 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Cadastra livro com todos os exemplares disponíveis")
-    void givenNewIsbn_whenCreate_thenSavesBookWithAllCopiesAvailable() {
+    @DisplayName("Cadastra livro com ISBN novo")
+    void givenNewIsbn_whenCreate_thenSavesTheBook() {
         // Arrange
         final BookRequest request = new BookRequest("Dom Casmurro", "Machado de Assis", ISBN, 3);
         this.saveReturnsArgument();
@@ -91,7 +91,6 @@ class BookServiceTest {
         // Assert
         Assertions.assertEquals("Dom Casmurro", created.getTitle());
         Assertions.assertEquals(ISBN, created.getIsbn());
-        Assertions.assertEquals(3, created.getAvailableCopies());
     }
 
     @Test

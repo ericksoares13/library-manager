@@ -1,4 +1,4 @@
-export type Slot = number | "gap";
+type Slot = number | "gap";
 
 /**
  * Páginas a mostrar: a primeira, a última e as vizinhas da atual; o resto vira "…".

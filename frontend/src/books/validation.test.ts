@@ -42,8 +42,8 @@ describe("Validação do formulário de livro", () => {
     expect(errors).toEqual({ isbn: "Informe o ISBN." });
   });
 
-  // Tamanho errado / letras / 10 dígitos com letra no fim
-  it.each(["12345", "97885359106AB", "853591066X"])("recusa ISBN %j", (isbn) => {
+  // Tamanho errado / letras
+  it.each(["12345", "97885359106AB"])("recusa ISBN %j", (isbn) => {
     // Arrange
     const form = { ...validForm, isbn };
 

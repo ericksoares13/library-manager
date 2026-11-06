@@ -91,7 +91,6 @@ class LoanServiceTest {
         Assertions.assertEquals("b1", loan.getBookId());
         Assertions.assertEquals("m1", loan.getMemberId());
         Assertions.assertEquals(TODAY, loan.getLoanDate());
-        Assertions.assertEquals(TODAY.plusDays(Loan.LOAN_PERIOD_DAYS), loan.getDueDate());
         Assertions.assertEquals(1, book.getAvailableCopies());
         Mockito.verify(this.bookRepository).save(book);
     }

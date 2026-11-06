@@ -14,7 +14,7 @@ export type PageQuery<S extends string> = {
   q: string;
 };
 
-export const PAGE_SIZE = 20;
+const PAGE_SIZE = 20;
 
 /** Monta a URL da listagem com os parâmetros da página. */
 export function pageUrl<S extends string>(path: string, { page, sort, q }: PageQuery<S>) {

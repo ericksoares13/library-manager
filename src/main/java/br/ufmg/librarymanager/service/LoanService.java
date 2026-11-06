@@ -39,10 +39,6 @@ public class LoanService {
         this.clock = clock;
     }
 
-    public List<Loan> findAll() {
-        return this.loanRepository.findAll();
-    }
-
     public List<Loan> findByMember(final String memberId) {
         this.memberService.findById(memberId);
         return this.loanRepository.findByMemberId(memberId);

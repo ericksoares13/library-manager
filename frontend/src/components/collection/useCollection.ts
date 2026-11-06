@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Page, PageQuery } from "../../api/page";
 
-export type FetchPage<T, S extends string> = (
+type FetchPage<T, S extends string> = (
   query: PageQuery<S>,
   signal: AbortSignal,
 ) => Promise<Page<T>>;

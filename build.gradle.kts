@@ -28,7 +28,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-mongodb")
     implementation("org.springframework.boot:spring-boot-starter-validation")
 
-    testImplementation(platform("org.junit:junit-bom:6.0.0"))
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -49,7 +48,13 @@ spotless {
     format("markdown") {
         target("**/*.md")
         targetExclude("build/**", ".claude/**", "frontend/node_modules/**")
-        prettier("3.6.2").config(mapOf("parser" to "markdown", "proseWrap" to "always", "printWidth" to 100))
+        prettier("3.6.2").config(
+            mapOf(
+                "parser" to "markdown",
+                "proseWrap" to "always",
+                "printWidth" to 100,
+            ),
+        )
     }
     format("frontend") {
         target(

@@ -31,13 +31,10 @@ public class GlobalExceptionHandler {
                 ex.getBindingResult().getFieldErrors().stream()
                         .sorted(
                                 Comparator.comparing(FieldError::getField)
-                                        .thenComparing(
-                                                FieldError::getDefaultMessage,
-                                                Comparator.nullsFirst(Comparator.naturalOrder())))
+                                        .thenComparing(FieldError::getDefaultMessage))
                         .map(error -> error.getField() + ": " + error.getDefaultMessage())
                         .collect(Collectors.joining("; "));
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ApiError(message.isEmpty() ? "Invalid request" : message));
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ApiError(message));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
