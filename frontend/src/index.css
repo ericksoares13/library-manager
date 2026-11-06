@@ -254,6 +254,51 @@ h2 {
   outline-offset: 2px;
 }
 
+.pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.pagination-page {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0 0.5rem;
+  border: none;
+  border-radius: 0.625rem;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  background: transparent;
+  cursor: pointer;
+  transition: transform 100ms ease-out;
+}
+
+.pagination-page:hover {
+  background: var(--fill);
+}
+
+.pagination-page:active {
+  transform: scale(0.95);
+}
+
+.pagination-page[aria-current] {
+  font-weight: 600;
+  color: var(--accent-text);
+  background: var(--accent);
+}
+
+.pagination-page:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.pagination-gap {
+  min-width: 1.5rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
 .search {
   display: flex;
   align-items: center;
