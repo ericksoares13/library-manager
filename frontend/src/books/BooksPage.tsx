@@ -1,13 +1,20 @@
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
-import { booksApi, type Book } from "../api/books";
+import { AnimatePresence } from "motion/react";
+import { useState } from "react";
+import { booksApi, type Book, type BookSort } from "../api/books";
+import { CollectionView, type SortOption } from "../components/collection/CollectionView";
+import { useCollection } from "../components/collection/useCollection";
 import { ConfirmDeleteDialog } from "../components/ConfirmDeleteDialog";
-import { AddIcon, DeleteIcon, EditIcon, MenuBookIcon, SearchIcon } from "../components/icons";
-import { settle } from "../components/motion";
-import { matches } from "../components/search";
+import { DeleteIcon, EditIcon, MenuBookIcon } from "../components/icons";
 import { BookFormSheet } from "./BookFormSheet";
 
 type Editing = { book?: Book } | null;
+
+const sortOptions: SortOption<BookSort>[] = [
+  { value: "TITLE", label: "Título" },
+  { value: "AUTHOR", label: "Autor" },
+  { value: "RECENT", label: "Mais recentes" },
+  { value: "AVAILABILITY", label: "Disponibilidade" },
+];
 
 function availabilityLabel(book: Book) {
   return book.availableCopies === 0
@@ -16,145 +23,66 @@ function availabilityLabel(book: Book) {
 }
 
 export function BooksPage() {
-  const reduceMotion = useReducedMotion();
-  const [books, setBooks] = useState<Book[] | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const [query, setQuery] = useState("");
+  const books = useCollection<Book, BookSort>(booksApi.list, "TITLE");
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Book | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    booksApi.list().then(
-      (result) => active && setBooks(result),
-      () => active && setLoadFailed(true),
-    );
-    return () => {
-      active = false;
-    };
-  }, [attempt]);
-
-  function retry() {
-    setLoadFailed(false);
-    setAttempt(attempt + 1);
-  }
-
-  function handleSaved(saved: Book) {
-    setBooks((current) => {
-      const list = current ?? [];
-      return list.some((book) => book.id === saved.id)
-        ? list.map((book) => (book.id === saved.id ? saved : book))
-        : [...list, saved];
-    });
+  // A ordem e o total vêm do back: depois de salvar ou excluir, a página é buscada de novo
+  function handleSaved() {
     setEditing(null);
+    books.reload();
   }
-
-  function handleDeleted(id: string) {
-    setBooks((current) => (current ?? []).filter((book) => book.id !== id));
-    setDeleting(null);
-  }
-
-  const visibleBooks = (books ?? []).filter((book) =>
-    matches(query, book.title, book.author, book.isbn),
-  );
 
   return (
     <>
-      <header className="page-header">
-        <div>
-          <h1 className="display">Livros</h1>
-          {books && books.length > 0 && (
-            <p className="secondary">
-              {books.length} {books.length === 1 ? "livro" : "livros"} no acervo
-            </p>
-          )}
-        </div>
-        <button type="button" className="button primary" onClick={() => setEditing({})}>
-          <AddIcon className="icon" aria-hidden />
-          Adicionar
-        </button>
-      </header>
-
-      {loadFailed ? (
-        <div role="alert" className="notice">
-          <p>Não foi possível carregar os livros.</p>
-          <button type="button" className="button" onClick={retry}>
-            Tentar novamente
-          </button>
-        </div>
-      ) : books === null ? (
-        <p role="status" className="secondary">
-          Carregando livros…
-        </p>
-      ) : books.length === 0 ? (
-        <div className="empty">
-          <MenuBookIcon className="empty-icon" aria-hidden />
-          <h2>Nenhum livro cadastrado</h2>
-          <p className="secondary">Adicione o primeiro livro do acervo.</p>
-        </div>
-      ) : (
-        <>
-          <label className="search">
-            <SearchIcon className="icon" aria-hidden />
-            <input
-              type="search"
-              placeholder="Buscar por título, autor ou ISBN"
-              aria-label="Buscar livros"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
-
-          {visibleBooks.length === 0 ? (
-            <p className="secondary">Nenhum livro encontrado para “{query}”.</p>
-          ) : (
-            <ul className="list" aria-label="Livros">
-              <AnimatePresence initial={false}>
-                {visibleBooks.map((book) => (
-                  <motion.li
-                    key={book.id}
-                    layout={!reduceMotion}
-                    className="row"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={settle}
-                  >
-                    <div className="row-main">
-                      <span className="row-title">{book.title}</span>
-                      <span className="row-subtitle">
-                        {book.author} · ISBN {book.isbn}
-                      </span>
-                    </div>
-                    <span className={book.availableCopies === 0 ? "badge is-out" : "badge"}>
-                      {availabilityLabel(book)}
-                    </span>
-                    <div className="row-actions">
-                      <button
-                        type="button"
-                        className="icon-button"
-                        aria-label={`Editar ${book.title}`}
-                        onClick={() => setEditing({ book })}
-                      >
-                        <EditIcon className="icon" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button destructive"
-                        aria-label={`Excluir ${book.title}`}
-                        onClick={() => setDeleting(book)}
-                      >
-                        <DeleteIcon className="icon" aria-hidden />
-                      </button>
-                    </div>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-          )}
-        </>
-      )}
+      <CollectionView
+        collection={books}
+        title="Livros"
+        countLabel={(total) => `${total} ${total === 1 ? "livro" : "livros"} no acervo`}
+        sortOptions={sortOptions}
+        search={{ label: "Buscar livros", placeholder: "Buscar por título, autor ou ISBN" }}
+        messages={{
+          loading: "Carregando livros…",
+          loadError: "Não foi possível carregar os livros.",
+          emptyTitle: "Nenhum livro cadastrado",
+          emptyText: "Adicione o primeiro livro do acervo.",
+          notFound: (q) => `Nenhum livro encontrado para “${q}”.`,
+        }}
+        emptyIcon={MenuBookIcon}
+        itemKey={(book) => book.id}
+        onAdd={() => setEditing({})}
+        renderItem={(book) => (
+          <>
+            <div className="row-main">
+              <span className="row-title">{book.title}</span>
+              <span className="row-subtitle">
+                {book.author} · ISBN {book.isbn}
+              </span>
+            </div>
+            <span className={book.availableCopies === 0 ? "badge is-out" : "badge"}>
+              {availabilityLabel(book)}
+            </span>
+            <div className="row-actions">
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`Editar ${book.title}`}
+                onClick={() => setEditing({ book })}
+              >
+                <EditIcon className="icon" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="icon-button destructive"
+                aria-label={`Excluir ${book.title}`}
+                onClick={() => setDeleting(book)}
+              >
+                <DeleteIcon className="icon" aria-hidden />
+              </button>
+            </div>
+          </>
+        )}
+      />
 
       <AnimatePresence>
         {editing && (
@@ -171,7 +99,11 @@ export function BooksPage() {
             name={deleting.title}
             conflictMessage="Este livro tem empréstimos ativos e não pode ser excluído."
             errorMessage="Não foi possível excluir o livro. Tente novamente."
-            onConfirm={() => booksApi.remove(deleting.id).then(() => handleDeleted(deleting.id))}
+            onConfirm={async () => {
+              await booksApi.remove(deleting.id);
+              setDeleting(null);
+              books.reload();
+            }}
             onClose={() => setDeleting(null)}
           />
         )}

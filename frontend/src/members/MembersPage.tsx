@@ -1,149 +1,78 @@
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useEffect, useState } from "react";
-import { membersApi, type Member } from "../api/members";
+import { AnimatePresence } from "motion/react";
+import { useState } from "react";
+import { membersApi, type Member, type MemberSort } from "../api/members";
+import { CollectionView, type SortOption } from "../components/collection/CollectionView";
+import { useCollection } from "../components/collection/useCollection";
 import { ConfirmDeleteDialog } from "../components/ConfirmDeleteDialog";
-import { AddIcon, DeleteIcon, EditIcon, GroupIcon, SearchIcon } from "../components/icons";
-import { settle } from "../components/motion";
-import { matches } from "../components/search";
+import { DeleteIcon, EditIcon, GroupIcon } from "../components/icons";
 import { MemberFormSheet } from "./MemberFormSheet";
 
 type Editing = { member?: Member } | null;
 
+const sortOptions: SortOption<MemberSort>[] = [
+  { value: "NAME", label: "Nome" },
+  { value: "EMAIL", label: "E-mail" },
+  { value: "RECENT", label: "Mais recentes" },
+];
+
 export function MembersPage() {
-  const reduceMotion = useReducedMotion();
-  const [members, setMembers] = useState<Member[] | null>(null);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const [attempt, setAttempt] = useState(0);
-  const [query, setQuery] = useState("");
+  const members = useCollection<Member, MemberSort>(membersApi.list, "NAME");
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Member | null>(null);
 
-  useEffect(() => {
-    let active = true;
-    membersApi.list().then(
-      (result) => active && setMembers(result),
-      () => active && setLoadFailed(true),
-    );
-    return () => {
-      active = false;
-    };
-  }, [attempt]);
-
-  function retry() {
-    setLoadFailed(false);
-    setAttempt(attempt + 1);
-  }
-
-  function handleSaved(saved: Member) {
-    setMembers((current) => {
-      const list = current ?? [];
-      return list.some((member) => member.id === saved.id)
-        ? list.map((member) => (member.id === saved.id ? saved : member))
-        : [...list, saved];
-    });
+  // A ordem e o total vêm do back: depois de salvar ou excluir, a página é buscada de novo
+  function handleSaved() {
     setEditing(null);
+    members.reload();
   }
-
-  function handleDeleted(id: string) {
-    setMembers((current) => (current ?? []).filter((member) => member.id !== id));
-    setDeleting(null);
-  }
-
-  const visibleMembers = (members ?? []).filter((member) =>
-    matches(query, member.name, member.email),
-  );
 
   return (
     <>
-      <header className="page-header">
-        <div>
-          <h1 className="display">Membros</h1>
-          {members && members.length > 0 && (
-            <p className="secondary">
-              {members.length} {members.length === 1 ? "membro cadastrado" : "membros cadastrados"}
-            </p>
-          )}
-        </div>
-        <button type="button" className="button primary" onClick={() => setEditing({})}>
-          <AddIcon className="icon" aria-hidden />
-          Adicionar
-        </button>
-      </header>
-
-      {loadFailed ? (
-        <div role="alert" className="notice">
-          <p>Não foi possível carregar os membros.</p>
-          <button type="button" className="button" onClick={retry}>
-            Tentar novamente
-          </button>
-        </div>
-      ) : members === null ? (
-        <p role="status" className="secondary">
-          Carregando membros…
-        </p>
-      ) : members.length === 0 ? (
-        <div className="empty">
-          <GroupIcon className="empty-icon" aria-hidden />
-          <h2>Nenhum membro cadastrado</h2>
-          <p className="secondary">Adicione o primeiro membro da biblioteca.</p>
-        </div>
-      ) : (
-        <>
-          <label className="search">
-            <SearchIcon className="icon" aria-hidden />
-            <input
-              type="search"
-              placeholder="Buscar por nome ou e-mail"
-              aria-label="Buscar membros"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
-
-          {visibleMembers.length === 0 ? (
-            <p className="secondary">Nenhum membro encontrado para “{query}”.</p>
-          ) : (
-            <ul className="list" aria-label="Membros">
-              <AnimatePresence initial={false}>
-                {visibleMembers.map((member) => (
-                  <motion.li
-                    key={member.id}
-                    layout={!reduceMotion}
-                    className="row"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                    transition={settle}
-                  >
-                    <div className="row-main">
-                      <span className="row-title">{member.name}</span>
-                      <span className="row-subtitle">{member.email}</span>
-                    </div>
-                    <div className="row-actions">
-                      <button
-                        type="button"
-                        className="icon-button"
-                        aria-label={`Editar ${member.name}`}
-                        onClick={() => setEditing({ member })}
-                      >
-                        <EditIcon className="icon" aria-hidden />
-                      </button>
-                      <button
-                        type="button"
-                        className="icon-button destructive"
-                        aria-label={`Excluir ${member.name}`}
-                        onClick={() => setDeleting(member)}
-                      >
-                        <DeleteIcon className="icon" aria-hidden />
-                      </button>
-                    </div>
-                  </motion.li>
-                ))}
-              </AnimatePresence>
-            </ul>
-          )}
-        </>
-      )}
+      <CollectionView
+        collection={members}
+        title="Membros"
+        countLabel={(total) =>
+          `${total} ${total === 1 ? "membro cadastrado" : "membros cadastrados"}`
+        }
+        sortOptions={sortOptions}
+        search={{ label: "Buscar membros", placeholder: "Buscar por nome ou e-mail" }}
+        messages={{
+          loading: "Carregando membros…",
+          loadError: "Não foi possível carregar os membros.",
+          emptyTitle: "Nenhum membro cadastrado",
+          emptyText: "Adicione o primeiro membro da biblioteca.",
+          notFound: (q) => `Nenhum membro encontrado para “${q}”.`,
+        }}
+        emptyIcon={GroupIcon}
+        itemKey={(member) => member.id}
+        onAdd={() => setEditing({})}
+        renderItem={(member) => (
+          <>
+            <div className="row-main">
+              <span className="row-title">{member.name}</span>
+              <span className="row-subtitle">{member.email}</span>
+            </div>
+            <div className="row-actions">
+              <button
+                type="button"
+                className="icon-button"
+                aria-label={`Editar ${member.name}`}
+                onClick={() => setEditing({ member })}
+              >
+                <EditIcon className="icon" aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="icon-button destructive"
+                aria-label={`Excluir ${member.name}`}
+                onClick={() => setDeleting(member)}
+              >
+                <DeleteIcon className="icon" aria-hidden />
+              </button>
+            </div>
+          </>
+        )}
+      />
 
       <AnimatePresence>
         {editing && (
@@ -160,7 +89,11 @@ export function MembersPage() {
             name={deleting.name}
             conflictMessage="Este membro tem empréstimos ativos e não pode ser excluído."
             errorMessage="Não foi possível excluir o membro. Tente novamente."
-            onConfirm={() => membersApi.remove(deleting.id).then(() => handleDeleted(deleting.id))}
+            onConfirm={async () => {
+              await membersApi.remove(deleting.id);
+              setDeleting(null);
+              members.reload();
+            }}
             onClose={() => setDeleting(null)}
           />
         )}

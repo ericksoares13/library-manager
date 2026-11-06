@@ -2,15 +2,15 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
-import { mockApi } from "./test/mockApi";
+import { mockApi, page } from "./test/mockApi";
 
 describe("Navegação entre as telas", () => {
   beforeEach(() => {
     // O hash da URL sobrevive entre os testes no jsdom
     window.history.replaceState(null, "", "/");
     mockApi(
-      { method: "GET", url: "/api/books", body: [] },
-      { method: "GET", url: "/api/members", body: [] },
+      { method: "GET", url: "/api/books", body: page([]) },
+      { method: "GET", url: "/api/members", body: page([]) },
     );
   });
 
@@ -44,8 +44,8 @@ describe("Navegação entre as telas", () => {
     // Arrange
     const user = userEvent.setup();
     const fetchMock = mockApi(
-      { method: "GET", url: "/api/books", body: [] },
-      { method: "GET", url: "/api/members", body: [] },
+      { method: "GET", url: "/api/books", body: page([]) },
+      { method: "GET", url: "/api/members", body: page([]) },
     );
     render(<App />);
     await user.click(screen.getByRole("link", { name: "Membros" }));

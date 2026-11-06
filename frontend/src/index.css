@@ -254,6 +254,20 @@ h2 {
   outline-offset: 2px;
 }
 
+/* Busca e ordenação na mesma linha (no celular, uma embaixo da outra) */
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.list-toolbar .search {
+  flex: 1 1 16rem;
+  margin-bottom: 0;
+}
+
 /* Seletor de ordenação: botão no estilo dos campos e menu próprio, como os menus da Apple */
 .sort-menu {
   position: relative;
@@ -344,6 +358,22 @@ h2 {
 
 .menu-option[aria-selected="true"] .menu-check {
   visibility: visible;
+}
+
+/* Carregando a próxima página: a lista atual fica um pouco apagada, só se demorar (sem piscar) */
+.list[aria-busy="true"] {
+  opacity: 0.6;
+  transition: opacity 200ms ease 150ms;
+}
+
+.list-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  font-size: 0.875rem;
 }
 
 .pagination {
