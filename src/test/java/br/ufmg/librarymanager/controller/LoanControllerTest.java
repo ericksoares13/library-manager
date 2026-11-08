@@ -67,17 +67,20 @@ class LoanControllerTest {
     }
 
     @Test
-    @DisplayName("Lista a página pedida com a busca, a situação e a ordem")
+    @DisplayName("Lista a página pedida com a busca, a situação, a ordem, o membro e o livro")
     void givenQueryStatusSortAndPage_whenGetLoans_thenRespondsWithThatPage() throws Exception {
         // Arrange
-        Mockito.when(this.loanService.search("ana", LoanStatus.OVERDUE, LoanSort.RECENT, 1, 5))
+        Mockito.when(
+                        this.loanService.search(
+                                "ana", LoanStatus.OVERDUE, LoanSort.RECENT, 1, 5, "m1", "b1"))
                 .thenReturn(new PageImpl<>(List.of(loan("l6", null)), PageRequest.of(1, 5), 6));
 
         // Act
         final MockHttpServletResponse response =
                 this.perform(
                         MockMvcRequestBuilders.get(
-                                "/api/loans?q=ana&status=OVERDUE&sort=RECENT&page=1&size=5"));
+                                "/api/loans?q=ana&status=OVERDUE&sort=RECENT"
+                                        + "&page=1&size=5&memberId=m1&bookId=b1"));
 
         // Assert
         final String json = body(response);
@@ -90,7 +93,9 @@ class LoanControllerTest {
     @DisplayName("Sem parâmetros lista os ativos por vencimento, com todos os campos")
     void givenNoParameters_whenGetLoans_thenListsActiveLoansByDueDate() throws Exception {
         // Arrange
-        Mockito.when(this.loanService.search("", LoanStatus.ACTIVE, LoanSort.DUE_DATE, 0, 20))
+        Mockito.when(
+                        this.loanService.search(
+                                "", LoanStatus.ACTIVE, LoanSort.DUE_DATE, 0, 20, null, null))
                 .thenReturn(new PageImpl<>(List.of(loan("l1", null))));
 
         // Act

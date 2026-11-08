@@ -34,9 +34,12 @@ public class LoanController {
             @RequestParam(defaultValue = "ACTIVE") final LoanStatus status,
             @RequestParam(defaultValue = "DUE_DATE") final LoanSort sort,
             @RequestParam(defaultValue = "0") final int page,
-            @RequestParam(defaultValue = "20") final int size) {
+            @RequestParam(defaultValue = "20") final int size,
+            @RequestParam(required = false) final String memberId,
+            @RequestParam(required = false) final String bookId) {
         return PageResponse.from(
-                this.loanService.search(q, status, sort, page, size), Function.identity());
+                this.loanService.search(q, status, sort, page, size, memberId, bookId),
+                Function.identity());
     }
 
     @PostMapping

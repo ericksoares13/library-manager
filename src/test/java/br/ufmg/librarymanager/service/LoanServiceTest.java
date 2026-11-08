@@ -70,7 +70,7 @@ class LoanServiceTest {
     }
 
     private static Book bookWithCopies(final int totalCopies) {
-        return new Book("Dom Casmurro", "Machado de Assis", "9788535910663", totalCopies);
+        return new Book("Dom Casmurro", "Machado de Assis", "9788575201176", totalCopies);
     }
 
     // O id é atribuído pelo Mongo ao salvar; as entidades não têm setter
@@ -299,7 +299,8 @@ class LoanServiceTest {
 
         // Act
         final Page<LoanResponse> page =
-                this.loanService.search("", LoanStatus.ACTIVE, LoanSort.DUE_DATE, 0, 20);
+                this.loanService.search(
+                        "", LoanStatus.ACTIVE, LoanSort.DUE_DATE, 0, 20, null, null);
 
         // Assert
         final LoanResponse loan = page.getContent().getFirst();
@@ -330,7 +331,7 @@ class LoanServiceTest {
 
         // Act
         final Page<LoanResponse> page =
-                this.loanService.search("José", LoanStatus.ALL, LoanSort.RECENT, 0, 20);
+                this.loanService.search("José", LoanStatus.ALL, LoanSort.RECENT, 0, 20, null, null);
 
         // Assert
         Assertions.assertTrue(page.isEmpty());
@@ -349,11 +350,49 @@ class LoanServiceTest {
 
         // Act
         final Page<LoanResponse> page =
-                this.loanService.search("", LoanStatus.RETURNED, LoanSort.RECENT, 0, 20);
+                this.loanService.search(
+                        "", LoanStatus.RETURNED, LoanSort.RECENT, 0, 20, null, null);
 
         // Assert
         final LoanResponse loan = page.getContent().getFirst();
         Assertions.assertNull(loan.bookTitle());
         Assertions.assertNull(loan.memberName());
+    }
+
+    @Test
+    @DisplayName("Na página do membro lista só os empréstimos dele")
+    void givenMemberId_whenSearch_thenFiltersByThatMember() {
+        // Arrange
+        Mockito.when(
+                        this.loanRepository.search(
+                                LoanFilter.of(LoanStatus.ACTIVE, TODAY).forMember("m1"),
+                                Pages.of(0, 20, LoanSort.DUE_DATE.toSort())))
+                .thenReturn(Page.empty());
+
+        // Act
+        final Page<LoanResponse> page =
+                this.loanService.search(
+                        "", LoanStatus.ACTIVE, LoanSort.DUE_DATE, 0, 20, "m1", null);
+
+        // Assert
+        Assertions.assertTrue(page.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Na página do livro lista só os empréstimos dele")
+    void givenBookId_whenSearch_thenFiltersByThatBook() {
+        // Arrange
+        Mockito.when(
+                        this.loanRepository.search(
+                                LoanFilter.of(LoanStatus.ALL, TODAY).forBook("b1"),
+                                Pages.of(0, 20, LoanSort.RECENT.toSort())))
+                .thenReturn(Page.empty());
+
+        // Act
+        final Page<LoanResponse> page =
+                this.loanService.search("", LoanStatus.ALL, LoanSort.RECENT, 0, 20, null, "b1");
+
+        // Assert
+        Assertions.assertTrue(page.isEmpty());
     }
 }

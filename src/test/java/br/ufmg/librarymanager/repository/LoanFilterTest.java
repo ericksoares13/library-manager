@@ -46,4 +46,40 @@ class LoanFilterTest {
         Assertions.assertEquals(
                 new Document("$and", List.of(new Document("returnDate", null), matches)), criteria);
     }
+
+    @Test
+    @DisplayName("Na página do membro exige o membro além da situação")
+    void givenMember_whenToCriteria_thenRequiresStatusAndThatMember() {
+        // Arrange
+        final LoanFilter filter = LoanFilter.of(LoanStatus.ACTIVE, TODAY).forMember("m1");
+
+        // Act
+        final Document criteria = filter.toCriteria().getCriteriaObject();
+
+        // Assert
+        Assertions.assertEquals(
+                new Document(
+                        "$and",
+                        List.of(new Document("returnDate", null), new Document("memberId", "m1"))),
+                criteria);
+    }
+
+    @Test
+    @DisplayName("Na página do livro exige o livro além da situação")
+    void givenBook_whenToCriteria_thenRequiresStatusAndThatBook() {
+        // Arrange
+        final LoanFilter filter = LoanFilter.of(LoanStatus.RETURNED, TODAY).forBook("b1");
+
+        // Act
+        final Document criteria = filter.toCriteria().getCriteriaObject();
+
+        // Assert
+        Assertions.assertEquals(
+                new Document(
+                        "$and",
+                        List.of(
+                                new Document("returnDate", new Document("$ne", null)),
+                                new Document("bookId", "b1"))),
+                criteria);
+    }
 }

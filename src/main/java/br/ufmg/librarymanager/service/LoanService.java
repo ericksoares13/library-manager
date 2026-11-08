@@ -57,20 +57,23 @@ public class LoanService {
     /**
      * Página da listagem. A busca (`query`) acha os livros (título, autor, ISBN) e os membros
      * (nome, e-mail) como nas outras listagens e traz os empréstimos deles; em branco, lista todos.
+     * Com `memberId` ou `bookId` (página do membro ou do livro), só os empréstimos dele.
      */
     public Page<LoanResponse> search(
             final String query,
             final LoanStatus status,
             final LoanSort sort,
             final int page,
-            final int size) {
+            final int size,
+            final String memberId,
+            final String bookId) {
         final LocalDate today = this.today();
         final String key = SearchKey.of(query);
+        final LoanFilter base = LoanFilter.of(status, today).forMember(memberId).forBook(bookId);
         final LoanFilter filter =
                 key.isEmpty()
-                        ? LoanFilter.of(status, today)
-                        : LoanFilter.of(status, today)
-                                .matching(this.bookIdsMatching(key), this.memberIdsMatching(key));
+                        ? base
+                        : base.matching(this.bookIdsMatching(key), this.memberIdsMatching(key));
         final Page<Loan> loans =
                 this.loanRepository.search(filter, Pages.of(page, size, sort.toSort()));
 
