@@ -5,7 +5,9 @@ import { CollectionView, type SortOption } from "../components/collection/Collec
 import { useCollection } from "../components/collection/useCollection";
 import { ConfirmDeleteDialog } from "../components/ConfirmDeleteDialog";
 import { DeleteIcon, EditIcon, GroupIcon } from "../components/icons";
+import type { PageProps } from "../App";
 import { MemberFormSheet } from "./MemberFormSheet";
+import { MemberPage } from "./MemberPage";
 
 type Editing = { member?: Member } | null;
 
@@ -15,7 +17,8 @@ const sortOptions: SortOption<MemberSort>[] = [
   { value: "RECENT", label: "Mais recentes" },
 ];
 
-export function MembersPage() {
+/** Lista de membros; com um id no endereço (`#/membros/<id>`), a página daquele membro. */
+export function MembersPage({ param: memberId }: PageProps) {
   const members = useCollection<Member, MemberSort>(membersApi.list, "NAME");
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Member | null>(null);
@@ -27,51 +30,60 @@ export function MembersPage() {
 
   return (
     <>
-      <CollectionView
-        collection={members}
-        title="Membros"
-        countLabel={(total) =>
-          `${total} ${total === 1 ? "membro cadastrado" : "membros cadastrados"}`
-        }
-        sortOptions={sortOptions}
-        search={{ label: "Buscar membros", placeholder: "Buscar por nome ou e-mail" }}
-        messages={{
-          loading: "Carregando membros…",
-          loadError: "Não foi possível carregar os membros.",
-          emptyTitle: "Nenhum membro cadastrado",
-          emptyText: "Adicione o primeiro membro da biblioteca.",
-          notFound: (q) => `Nenhum membro encontrado para “${q}”.`,
-        }}
-        emptyIcon={GroupIcon}
-        itemKey={(member) => member.id}
-        onAdd={() => setEditing({})}
-        renderItem={(member) => (
-          <>
-            <div className="row-main">
-              <span className="row-title">{member.name}</span>
-              <span className="row-subtitle">{member.email}</span>
-            </div>
-            <div className="row-actions">
-              <button
-                type="button"
-                className="icon-button"
-                aria-label={`Editar ${member.name}`}
-                onClick={() => setEditing({ member })}
-              >
-                <EditIcon className="icon" aria-hidden />
-              </button>
-              <button
-                type="button"
-                className="icon-button destructive"
-                aria-label={`Excluir ${member.name}`}
-                onClick={() => setDeleting(member)}
-              >
-                <DeleteIcon className="icon" aria-hidden />
-              </button>
-            </div>
-          </>
-        )}
-      />
+      {/* A lista fica montada (escondida) na página do membro: volta com a busca e a página */}
+      <div hidden={Boolean(memberId)}>
+        <CollectionView
+          collection={members}
+          title="Membros"
+          countLabel={(total) =>
+            `${total} ${total === 1 ? "membro cadastrado" : "membros cadastrados"}`
+          }
+          sortOptions={sortOptions}
+          search={{ label: "Buscar membros", placeholder: "Buscar por nome ou e-mail" }}
+          messages={{
+            loading: "Carregando membros…",
+            loadError: "Não foi possível carregar os membros.",
+            emptyTitle: "Nenhum membro cadastrado",
+            emptyText: "Adicione o primeiro membro da biblioteca.",
+            notFound: (q) => `Nenhum membro encontrado para “${q}”.`,
+          }}
+          emptyIcon={GroupIcon}
+          itemKey={(member) => member.id}
+          onAdd={() => setEditing({})}
+          renderItem={(member) => (
+            <>
+              <div className="row-main">
+                <a
+                  className="row-title row-link"
+                  href={`#/membros/${encodeURIComponent(member.id)}`}
+                >
+                  {member.name}
+                </a>
+                <span className="row-subtitle">{member.email}</span>
+              </div>
+              <div className="row-actions">
+                <button
+                  type="button"
+                  className="icon-button"
+                  aria-label={`Editar ${member.name}`}
+                  onClick={() => setEditing({ member })}
+                >
+                  <EditIcon className="icon" aria-hidden />
+                </button>
+                <button
+                  type="button"
+                  className="icon-button destructive"
+                  aria-label={`Excluir ${member.name}`}
+                  onClick={() => setDeleting(member)}
+                >
+                  <DeleteIcon className="icon" aria-hidden />
+                </button>
+              </div>
+            </>
+          )}
+        />
+      </div>
+      {memberId && <MemberPage key={memberId} id={memberId} />}
 
       <AnimatePresence>
         {editing && (

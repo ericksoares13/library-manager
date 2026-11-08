@@ -29,7 +29,7 @@ const domCasmurro: Book = {
   id: "b1",
   title: "Dom Casmurro",
   author: "Machado de Assis",
-  isbn: "9788535910663",
+  isbn: "9788575201176",
   totalCopies: 2,
   availableCopies: 1,
 };
@@ -72,7 +72,7 @@ async function pickBookAndMember(user: ReturnType<typeof userEvent.setup>, dialo
 }
 
 describe("Página de empréstimos", () => {
-  it("mostra os ativos por vencimento, com o livro, o membro e o prazo", async () => {
+  it("mostra os ativos por vencimento, com os links do livro e do membro e o prazo", async () => {
     // Arrange
     const fetchMock = mockApi(
       loansRoute([
@@ -88,8 +88,15 @@ describe("Página de empréstimos", () => {
     const rows = within(await screen.findByRole("list", { name: "Empréstimos" })).getAllByRole(
       "listitem",
     );
-    expect(within(rows[0]).getByText("Dom Casmurro")).toBeInTheDocument();
-    expect(within(rows[0]).getByText("Ana Souza · Emprestado em 08/11/2026")).toBeInTheDocument();
+    expect(within(rows[0]).getByRole("link", { name: "Dom Casmurro" })).toHaveAttribute(
+      "href",
+      "#/livros/b1",
+    );
+    expect(rows[0]).toHaveTextContent("Ana Souza · Emprestado em 08/11/2026");
+    expect(within(rows[0]).getByRole("link", { name: "Ana Souza" })).toHaveAttribute(
+      "href",
+      "#/membros/m1",
+    );
     expect(within(rows[0]).getByText("Atrasado desde 01/11/2026")).toBeInTheDocument();
     expect(within(rows[1]).getByText("Devolver até 22/11/2026")).toBeInTheDocument();
     expect(
@@ -318,7 +325,7 @@ describe("Página de empréstimos", () => {
     // Arrange
     mockApi(loansRoute([loan()]));
     const user = await renderLoaded();
-    await user.click(screen.getByRole("button", { name: "Devolver Dom Casmurro" }));
+    await user.click(screen.getByRole("button", { name: "Devolver Dom Casmurro de Ana Souza" }));
     const dialog = screen.getByRole("alertdialog", { name: "Devolver “Dom Casmurro”?" });
     const fetchMock = mockApi(loansRoute([]), {
       method: "POST",
@@ -344,7 +351,7 @@ describe("Página de empréstimos", () => {
       body: { message: "Loan has already been returned" },
     });
     const user = await renderLoaded();
-    await user.click(screen.getByRole("button", { name: "Devolver Dom Casmurro" }));
+    await user.click(screen.getByRole("button", { name: "Devolver Dom Casmurro de Ana Souza" }));
     const dialog = screen.getByRole("alertdialog");
 
     // Act

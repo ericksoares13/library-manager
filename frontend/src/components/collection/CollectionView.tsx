@@ -10,8 +10,13 @@ type Props<T, S extends string, F extends string> = {
   collection: Collection<T, S, F>;
   /** Título da tela e nome acessível da lista ("Livros"). */
   title: string;
+  /**
+   * Cabeçalho próprio no lugar do padrão (título, contagem e botão de adicionar). Ex.: a página do
+   * membro, com o nome dele e as ações; aí `countLabel`, `addLabel` e `onAdd` não são usados.
+   */
+  header?: ReactNode;
   /** Linha abaixo do título, a partir do total sem busca ("101 livros no acervo"). */
-  countLabel: (total: number, filter: F | undefined) => string;
+  countLabel?: (total: number, filter: F | undefined) => string;
   /** Texto do botão de adicionar (padrão "Adicionar"). */
   addLabel?: string;
   sortOptions: SortOption<S>[];
@@ -31,7 +36,7 @@ type Props<T, S extends string, F extends string> = {
   itemKey: (item: T) => string;
   /** Conteúdo de cada linha (título, detalhes, ações). */
   renderItem: (item: T) => ReactNode;
-  onAdd: () => void;
+  onAdd?: () => void;
 };
 
 /**
@@ -42,6 +47,7 @@ type Props<T, S extends string, F extends string> = {
 export function CollectionView<T, S extends string, F extends string = never>({
   collection,
   title,
+  header,
   countLabel,
   addLabel = "Adicionar",
   sortOptions,
@@ -68,19 +74,23 @@ export function CollectionView<T, S extends string, F extends string = never>({
 
   return (
     <>
-      <header className="page-header">
-        <div>
-          <h1 className="display">{title}</h1>
-          {/* A linha existe mesmo vazia: o botão ao lado fica na mesma altura em todas as telas */}
-          <p className="secondary page-count">
-            {catalogTotal !== null && catalogTotal > 0 && countLabel(catalogTotal, query.filter)}
-          </p>
-        </div>
-        <button type="button" className="button primary" onClick={onAdd}>
-          <AddIcon className="icon" aria-hidden />
-          {addLabel}
-        </button>
-      </header>
+      {header ?? (
+        <header className="page-header">
+          <div>
+            <h1 className="display">{title}</h1>
+            {/* A linha existe mesmo vazia: o botão ao lado fica na mesma altura em todas as telas */}
+            <p className="secondary page-count">
+              {catalogTotal !== null &&
+                catalogTotal > 0 &&
+                countLabel?.(catalogTotal, query.filter)}
+            </p>
+          </div>
+          <button type="button" className="button primary" onClick={onAdd}>
+            <AddIcon className="icon" aria-hidden />
+            {addLabel}
+          </button>
+        </header>
+      )}
 
       {failed ? (
         <div role="alert" className="notice">

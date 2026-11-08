@@ -41,6 +41,20 @@ async function fillNewBookForm(user: ReturnType<typeof userEvent.setup>, isbn: s
 }
 
 describe("Página de livros", () => {
+  it("leva à página do livro pelo título", async () => {
+    // Arrange
+    mockApi({ method: "GET", url: "/api/books", body: page([book()]) });
+
+    // Act
+    render(<BooksPage />);
+
+    // Assert
+    expect(await screen.findByRole("link", { name: "Dom Casmurro" })).toHaveAttribute(
+      "href",
+      "#/livros/b1",
+    );
+  });
+
   it("mostra a primeira página por título, com a disponibilidade e o total", async () => {
     // Arrange
     const fetchMock = mockApi({

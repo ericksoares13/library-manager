@@ -21,14 +21,11 @@ const PAGE_SIZE = 20;
 export function pageUrl<S extends string, F extends string>(
   path: string,
   { page, sort, q }: PageQuery<S, F>,
-  extra: Record<string, string> = {},
+  extra: Record<string, string | undefined> = {},
 ) {
-  const params = new URLSearchParams({
-    page: String(page),
-    size: String(PAGE_SIZE),
-    sort,
-    ...extra,
-  });
+  const params = new URLSearchParams({ page: String(page), size: String(PAGE_SIZE), sort });
+  // Extra sem valor (ex.: sem membro) não entra na URL
+  Object.entries(extra).forEach(([name, value]) => value !== undefined && params.set(name, value));
   if (q.trim()) {
     params.set("q", q.trim());
   }

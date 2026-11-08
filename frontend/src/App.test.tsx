@@ -85,7 +85,9 @@ describe("Navegação entre as telas", () => {
     );
     const user = userEvent.setup();
     render(<App />);
-    await user.click(await screen.findByRole("button", { name: "Devolver Dom Casmurro" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Devolver Dom Casmurro de Ana Souza" }),
+    );
     const booksRequests = () =>
       fetchMock.mock.calls.filter(([input]) => String(input).startsWith("/api/books")).length;
     const before = booksRequests();
@@ -111,6 +113,65 @@ describe("Navegação entre as telas", () => {
 
     // Assert
     await waitFor(() => expect(scrollTo).toHaveBeenLastCalledWith(0, 1200));
+  });
+
+  it("abre a página do livro dentro da aba Livros", async () => {
+    // Arrange
+    window.history.replaceState(null, "", "/#/livros/b1");
+    mockApi(
+      { method: "GET", url: "/api/books", body: page([]) },
+      {
+        method: "GET",
+        url: "/api/books/b1",
+        body: {
+          id: "b1",
+          title: "Helena",
+          author: "Machado de Assis",
+          isbn: "9788575201176",
+          totalCopies: 1,
+          availableCopies: 1,
+        },
+      },
+      { method: "GET", url: "/api/members", body: page([]) },
+      { method: "GET", url: "/api/loans", body: page([]) },
+    );
+
+    // Act
+    render(<App />);
+
+    // Assert
+    expect(await screen.findByRole("heading", { level: 1, name: "Helena" })).toBeVisible();
+    const sections = screen.getByRole("navigation", { name: "Seções" });
+    expect(within(sections).getByRole("link", { name: "Livros" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+  });
+
+  it("abre a página do membro dentro da aba Membros", async () => {
+    // Arrange
+    window.history.replaceState(null, "", "/#/membros/m1");
+    mockApi(
+      { method: "GET", url: "/api/books", body: page([]) },
+      { method: "GET", url: "/api/members", body: page([]) },
+      { method: "GET", url: "/api/members/m1", body: { id: "m1", name: "Ana", email: "a@b.com" } },
+      { method: "GET", url: "/api/loans", body: page([]) },
+    );
+
+    // Act
+    render(<App />);
+
+    // Assert
+    expect(await screen.findByRole("heading", { level: 1, name: "Ana" })).toBeVisible();
+    const sections = screen.getByRole("navigation", { name: "Seções" });
+    expect(within(sections).getByRole("link", { name: "Membros" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Membros", current: false })).toHaveAttribute(
+      "href",
+      "#/membros",
+    );
   });
 
   it("abre direto na tela do endereço", async () => {

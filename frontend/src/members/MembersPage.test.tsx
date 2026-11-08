@@ -65,6 +65,20 @@ describe("Página de membros", () => {
     expect(lastListParams(fetchMock, "/api/members")).toMatchObject({ page: "0", sort: "NAME" });
   });
 
+  it("leva à página do membro pelo nome", async () => {
+    // Arrange
+    mockApi({ method: "GET", url: "/api/members", body: page([member()]) });
+
+    // Act
+    render(<MembersPage />);
+
+    // Assert
+    expect(await screen.findByRole("link", { name: "Ana Souza" })).toHaveAttribute(
+      "href",
+      "#/membros/m1",
+    );
+  });
+
   it("cadastra um membro e busca a lista de novo", async () => {
     // Arrange
     const created = member({ id: "m3", name: "Carla Dias", email: "carla@example.com" });

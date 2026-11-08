@@ -19,12 +19,16 @@ export type Loan = {
 /** Situações aceitas pela API (`LoanStatus` do back). */
 export type LoanStatus = "ACTIVE" | "OVERDUE" | "RETURNED" | "ALL";
 
+/** De quem são os empréstimos listados: um membro ou um livro (sem nada, de todos). */
+export type LoansOf = { memberId?: string } | { bookId?: string };
+
 /** Ordenações aceitas pela API (`LoanSort` do back). */
 export type LoanSort = "DUE_DATE" | "RECENT";
 
 export const loansApi = {
-  list: (query: PageQuery<LoanSort, LoanStatus>, signal?: AbortSignal) =>
-    request<Page<Loan>>(pageUrl("/api/loans", query, { status: query.filter ?? "ACTIVE" }), {
+  /** Com `of`, só os empréstimos daquele membro ou livro (páginas de detalhe). */
+  list: (query: PageQuery<LoanSort, LoanStatus>, signal?: AbortSignal, of: LoansOf = {}) =>
+    request<Page<Loan>>(pageUrl("/api/loans", query, { status: query.filter ?? "ACTIVE", ...of }), {
       signal,
     }),
   borrow: (bookId: string, memberId: string) =>

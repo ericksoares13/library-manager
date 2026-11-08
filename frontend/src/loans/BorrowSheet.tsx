@@ -2,12 +2,17 @@ import { useId, useState, type FormEvent } from "react";
 import { booksApi, type Book } from "../api/books";
 import { loansApi } from "../api/loans";
 import { membersApi, type Member } from "../api/members";
+import { Field } from "../components/Field";
 import { CloseIcon } from "../components/icons";
 import { Modal } from "../components/Modal";
 import { SearchPicker } from "../components/SearchPicker";
 import { borrowErrorMessage } from "./format";
 
 type Props = {
+  /** Membro já escolhido (página do membro): o formulário só pede o livro. */
+  member?: Member;
+  /** Livro já escolhido (página do livro): o formulário só pede o membro. */
+  book?: Book;
   onClose: () => void;
   onBorrowed: () => void;
 };
@@ -21,10 +26,15 @@ const searchMembers = (q: string, signal: AbortSignal) =>
 
 const LOAN_PERIOD_DAYS = 14;
 
-export function BorrowSheet({ onClose, onBorrowed }: Props) {
+export function BorrowSheet({
+  member: presetMember,
+  book: presetBook,
+  onClose,
+  onBorrowed,
+}: Props) {
   const titleId = useId();
-  const [book, setBook] = useState<Book | null>(null);
-  const [member, setMember] = useState<Member | null>(null);
+  const [book, setBook] = useState<Book | null>(presetBook ?? null);
+  const [member, setMember] = useState<Member | null>(presetMember ?? null);
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -56,51 +66,60 @@ export function BorrowSheet({ onClose, onBorrowed }: Props) {
           </button>
         </header>
 
-        <SearchPicker
-          label="Livro"
-          placeholder="Buscar por título, autor ou ISBN"
-          autoFocus
-          search={searchBooks}
-          itemKey={(item) => item.id}
-          itemLabel={(item) => item.title}
-          isDisabled={(item) => item.availableCopies === 0}
-          renderOption={(item) => (
-            <>
-              <span className="picker-option-title">{item.title}</span>
-              <span className="picker-option-detail">
-                {item.author} ·{" "}
-                {item.availableCopies === 0
-                  ? "Indisponível"
-                  : `${item.availableCopies} de ${item.totalCopies} disponíveis`}
-              </span>
-            </>
-          )}
-          value={book}
-          onChange={(item) => {
-            setBook(item);
-            setServerError(null);
-          }}
-          error={submitted && !book ? "Escolha um livro." : undefined}
-        />
-        <SearchPicker
-          label="Membro"
-          placeholder="Buscar por nome ou e-mail"
-          search={searchMembers}
-          itemKey={(item) => item.id}
-          itemLabel={(item) => item.name}
-          renderOption={(item) => (
-            <>
-              <span className="picker-option-title">{item.name}</span>
-              <span className="picker-option-detail">{item.email}</span>
-            </>
-          )}
-          value={member}
-          onChange={(item) => {
-            setMember(item);
-            setServerError(null);
-          }}
-          error={submitted && !member ? "Escolha um membro." : undefined}
-        />
+        {presetBook ? (
+          <Field label="Livro" value={presetBook.title} disabled readOnly />
+        ) : (
+          <SearchPicker
+            label="Livro"
+            placeholder="Buscar por título, autor ou ISBN"
+            autoFocus
+            search={searchBooks}
+            itemKey={(item) => item.id}
+            itemLabel={(item) => item.title}
+            isDisabled={(item) => item.availableCopies === 0}
+            renderOption={(item) => (
+              <>
+                <span className="picker-option-title">{item.title}</span>
+                <span className="picker-option-detail">
+                  {item.author} ·{" "}
+                  {item.availableCopies === 0
+                    ? "Indisponível"
+                    : `${item.availableCopies} de ${item.totalCopies} disponíveis`}
+                </span>
+              </>
+            )}
+            value={book}
+            onChange={(item) => {
+              setBook(item);
+              setServerError(null);
+            }}
+            error={submitted && !book ? "Escolha um livro." : undefined}
+          />
+        )}
+        {presetMember ? (
+          <Field label="Membro" value={presetMember.name} disabled readOnly />
+        ) : (
+          <SearchPicker
+            label="Membro"
+            placeholder="Buscar por nome ou e-mail"
+            autoFocus={Boolean(presetBook)}
+            search={searchMembers}
+            itemKey={(item) => item.id}
+            itemLabel={(item) => item.name}
+            renderOption={(item) => (
+              <>
+                <span className="picker-option-title">{item.name}</span>
+                <span className="picker-option-detail">{item.email}</span>
+              </>
+            )}
+            value={member}
+            onChange={(item) => {
+              setMember(item);
+              setServerError(null);
+            }}
+            error={submitted && !member ? "Escolha um membro." : undefined}
+          />
+        )}
         <p className="secondary">O prazo de devolução é de {LOAN_PERIOD_DAYS} dias.</p>
 
         {serverError && (

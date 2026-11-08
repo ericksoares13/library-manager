@@ -15,6 +15,7 @@ export type MemberSort = "NAME" | "EMAIL" | "RECENT";
 export const membersApi = {
   list: (query: PageQuery<MemberSort>, signal?: AbortSignal) =>
     request<Page<Member>>(pageUrl("/api/members", query), { signal }),
+  get: (id: string, signal?: AbortSignal) => request<Member>(`/api/members/${id}`, { signal }),
   create: (member: MemberInput) => request<Member>("/api/members", json("POST", member)),
   update: (id: string, member: MemberInput) =>
     request<Member>(`/api/members/${id}`, json("PUT", member)),
