@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { Book } from "../api/books";
 import type { Loan } from "../api/loans";
 import type { Member } from "../api/members";
@@ -228,6 +228,30 @@ describe("Página de empréstimos", () => {
     expect(field).toHaveAttribute("aria-expanded", "false");
     expect(screen.getByRole("dialog", { name: "Novo empréstimo" })).toBeInTheDocument();
   });
+  it("mantém as opções na tela enquanto a busca do texto novo carrega", async () => {
+    // Arrange
+    mockApi(loansRoute([]), ...pickerRoutes);
+    const user = userEvent.setup();
+    render(<LoansPage />);
+    const dialog = await openBorrowSheet(user);
+    const field = within(dialog).getByRole("combobox", { name: "Livro" });
+    await user.click(field);
+    await screen.findByRole("option", { name: /Dom Casmurro/ });
+    // A próxima busca não responde: a tela fica no meio do carregamento
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => new Promise(() => {})),
+    );
+
+    // Act
+    await user.type(field, "dom");
+
+    // Assert
+    expect(screen.getByRole("option", { name: /Dom Casmurro/ })).toBeInTheDocument();
+    expect(screen.queryByText("Buscando…")).not.toBeInTheDocument();
+    expect(screen.getByRole("listbox", { name: "Livro" })).toHaveAttribute("aria-busy", "true");
+  });
+
   it("avisa que a lista de opções não mostra tudo", async () => {
     // Arrange
     mockApi(loansRoute([]), {

@@ -1,7 +1,8 @@
 import { useEffect, useId, useState, type KeyboardEvent, type ReactNode } from "react";
 import type { Page } from "../api/page";
 
-type Results<T> = { q: string; page: Page<T> } | { q: string; failed: true };
+/** Última resposta: o texto buscado, a página (a última que chegou) e se a busca do texto falhou. */
+type Results<T> = { q: string; page?: Page<T>; failed?: boolean };
 
 type Props<T> = {
   label: string;
@@ -55,16 +56,17 @@ export function SearchPicker<T>({
       (page) => setResults({ q: text, page }),
       () => {
         if (!controller.signal.aborted) {
-          setResults({ q: text, failed: true });
+          setResults((previous) => ({ q: text, page: previous?.page, failed: true }));
         }
       },
     );
     return () => controller.abort();
   }, [open, search, text]);
 
-  // Resultado de outra busca (o texto mudou e a nova ainda não voltou) conta como carregando
-  const current = results?.q === text ? results : null;
-  const page = current && "page" in current ? current.page : null;
+  // Enquanto a busca do texto novo não volta, a lista anterior continua na tela (trocar a cada
+  // tecla por "Buscando…" fazia a lista piscar); a nova entra de uma vez quando chega
+  const loading = results?.q !== text;
+  const page = results?.page ?? null;
   const items = page?.items ?? [];
   // Só a primeira página aparece: o resto se encontra digitando
   const hidden = page ? page.totalItems - items.length : 0;
@@ -116,9 +118,9 @@ export function SearchPicker<T>({
   }
 
   const status =
-    current === null
+    results === null
       ? "Buscando…"
-      : "failed" in current
+      : results.failed
         ? "Não foi possível buscar. Tente de novo."
         : items.length === 0
           ? "Nada encontrado."
@@ -161,7 +163,13 @@ export function SearchPicker<T>({
               {status}
             </p>
           ) : null}
-          <ul id={listId} role="listbox" aria-label={label} className="picker-list">
+          <ul
+            id={listId}
+            role="listbox"
+            aria-label={label}
+            aria-busy={loading}
+            className="picker-list"
+          >
             {items.map((item, index) => (
               <li
                 key={itemKey(item)}
