@@ -6,13 +6,17 @@ import type { Collection } from "./useCollection";
 
 export type { SortOption };
 
-type Props<T, S extends string> = {
-  collection: Collection<T, S>;
+type Props<T, S extends string, F extends string> = {
+  collection: Collection<T, S, F>;
   /** Título da tela e nome acessível da lista ("Livros"). */
   title: string;
-  /** Linha abaixo do título, a partir do total do acervo ("101 livros no acervo"). */
-  countLabel: (total: number) => string;
+  /** Linha abaixo do título, a partir do total sem busca ("101 livros no acervo"). */
+  countLabel: (total: number, filter: F | undefined) => string;
+  /** Texto do botão de adicionar (padrão "Adicionar"). */
+  addLabel?: string;
   sortOptions: SortOption<S>[];
+  /** Filtro numa seção do menu de ordenação (ex.: situação dos empréstimos). */
+  filter?: { label: string; options: SortOption<F>[] };
   search: { label: string; placeholder: string };
   messages: {
     loading: string;
@@ -20,6 +24,8 @@ type Props<T, S extends string> = {
     emptyTitle: string;
     emptyText: string;
     notFound: (q: string) => string;
+    /** Nada no filtro escolhido, sem busca. */
+    emptyFilter?: (filter: F) => string;
   };
   emptyIcon: ComponentType<SVGProps<SVGSVGElement>>;
   itemKey: (item: T) => string;
@@ -29,21 +35,24 @@ type Props<T, S extends string> = {
 };
 
 /**
- * Tela de listagem: cabeçalho com "Adicionar", busca, ordenação, lista paginada e os estados de
- * carregando, erro e vazio. Cada tela só diz o que é dela (textos, opções e a linha).
+ * Tela de listagem: cabeçalho com o botão de adicionar, filtro (opcional), busca, ordenação, lista
+ * paginada e os estados de carregando, erro e vazio. Cada tela só diz o que é dela (textos, opções
+ * e a linha).
  */
-export function CollectionView<T, S extends string>({
+export function CollectionView<T, S extends string, F extends string = never>({
   collection,
   title,
   countLabel,
+  addLabel = "Adicionar",
   sortOptions,
+  filter,
   search,
   messages,
   emptyIcon: EmptyIcon,
   itemKey,
   renderItem,
   onAdd,
-}: Props<T, S>) {
+}: Props<T, S, F>) {
   const { page, catalogTotal, query, loading, failed } = collection;
 
   function goTo(target: number) {
@@ -54,19 +63,22 @@ export function CollectionView<T, S extends string>({
 
   const first = page ? page.page * page.size + 1 : 0;
   const last = page ? first + page.items.length - 1 : 0;
+  // Com filtro, o total sem busca é só o do filtro escolhido: os controles continuam na tela
+  const catalogEmpty = !filter && catalogTotal === 0;
 
   return (
     <>
       <header className="page-header">
         <div>
           <h1 className="display">{title}</h1>
-          {catalogTotal !== null && catalogTotal > 0 && (
-            <p className="secondary">{countLabel(catalogTotal)}</p>
-          )}
+          {/* A linha existe mesmo vazia: o botão ao lado fica na mesma altura em todas as telas */}
+          <p className="secondary page-count">
+            {catalogTotal !== null && catalogTotal > 0 && countLabel(catalogTotal, query.filter)}
+          </p>
         </div>
         <button type="button" className="button primary" onClick={onAdd}>
           <AddIcon className="icon" aria-hidden />
-          Adicionar
+          {addLabel}
         </button>
       </header>
 
@@ -81,7 +93,7 @@ export function CollectionView<T, S extends string>({
         <p role="status" className="secondary">
           {messages.loading}
         </p>
-      ) : catalogTotal === 0 ? (
+      ) : catalogEmpty ? (
         <div className="empty">
           <EmptyIcon className="empty-icon" aria-hidden />
           <h2>{messages.emptyTitle}</h2>
@@ -100,11 +112,24 @@ export function CollectionView<T, S extends string>({
                 onChange={(event) => collection.search(event.target.value)}
               />
             </label>
-            <SortMenu options={sortOptions} value={query.sort} onChange={collection.sortBy} />
+            <SortMenu
+              options={sortOptions}
+              value={query.sort}
+              onChange={collection.sortBy}
+              filter={
+                filter && query.filter !== undefined
+                  ? { ...filter, value: query.filter, onChange: collection.filterBy }
+                  : undefined
+              }
+            />
           </div>
 
           {page.items.length === 0 ? (
-            <p className="secondary">{messages.notFound(query.q)}</p>
+            <p className="secondary">
+              {query.q.trim() || query.filter === undefined || !messages.emptyFilter
+                ? messages.notFound(query.q)
+                : messages.emptyFilter(query.filter)}
+            </p>
           ) : (
             <>
               {/* Cada resposta do back é uma lista nova: troca de uma vez, sem animar linha a

@@ -95,6 +95,36 @@ describe("Menu de ordenação", () => {
     await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
   });
 
+  it("com filtro, mostra as duas seções e escolhe a situação sem mudar a ordem", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const onSortChange = vi.fn();
+    const onFilterChange = vi.fn();
+    render(
+      <SortMenu
+        options={options}
+        value="TITLE"
+        onChange={onSortChange}
+        filter={{
+          label: "Situação",
+          options: [
+            { value: "ACTIVE", label: "Ativos" },
+            { value: "OVERDUE", label: "Atrasados" },
+          ],
+          value: "ACTIVE",
+          onChange: onFilterChange,
+        }}
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: "Situação Ativos, ordenar por Título" }));
+
+    // Act
+    await user.click(screen.getByRole("option", { name: "Atrasados" }));
+
+    // Assert
+    expect(onFilterChange).toHaveBeenCalledWith("OVERDUE");
+    expect(onSortChange).not.toHaveBeenCalled();
+  });
   it("abre pelo teclado", async () => {
     // Arrange
     const user = userEvent.setup();

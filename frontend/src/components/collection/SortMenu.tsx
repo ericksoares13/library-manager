@@ -12,17 +12,58 @@ import { settle } from "../motion";
 
 export type SortOption<S extends string> = { value: S; label: string };
 
-type Props<S extends string> = {
+/** Seção de filtro acima da ordenação, no mesmo menu (ex.: situação dos empréstimos). */
+export type FilterSection<F extends string> = {
+  label: string;
+  options: SortOption<F>[];
+  value: F;
+  onChange: (value: F) => void;
+};
+
+type Props<S extends string, F extends string> = {
   options: SortOption<S>[];
   value: S;
   onChange: (value: S) => void;
+  filter?: FilterSection<F>;
 };
 
+/** Uma opção do menu, de qualquer seção, na ordem em que aparece. */
+type Item = { key: string; label: string; selected: boolean; pick: () => void };
+
+type Section = { label: string; items: Item[] };
+
+function section<V extends string>(
+  label: string,
+  options: SortOption<V>[],
+  value: V,
+  onChange: (value: V) => void,
+): Section {
+  return {
+    label,
+    items: options.map((option) => ({
+      key: `${label}:${option.value}`,
+      label: option.label,
+      selected: option.value === value,
+      pick: () => {
+        if (option.value !== value) {
+          onChange(option.value);
+        }
+      },
+    })),
+  };
+}
+
 /**
- * Seletor de ordenação em menu próprio (o `<select>` nativo abre o menu do sistema, fora do
- * visual). Segue o padrão listbox: setas movem, Enter/Espaço escolhe, Esc e clique fora fecham.
+ * Seletor de ordenação (e filtro, se houver) em menu próprio: o `<select>` nativo abre o menu do
+ * sistema, fora do visual. Segue o padrão listbox: setas movem, Enter/Espaço escolhe, Esc e
+ * clique fora fecham. Com o filtro, as duas escolhas ficam em seções do mesmo menu.
  */
-export function SortMenu<S extends string>({ options, value, onChange }: Props<S>) {
+export function SortMenu<S extends string, F extends string = never>({
+  options,
+  value,
+  onChange,
+  filter,
+}: Props<S, F>) {
   const reduceMotion = useReducedMotion();
   const id = useId();
   const [open, setOpen] = useState(false);
@@ -31,11 +72,19 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
   const buttonRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const selected = options.find((option) => option.value === value) ?? options[0];
+  const selectedFilter = filter?.options.find((option) => option.value === filter.value);
   // Pressionando o botão: o ponteiro que abriu o menu ainda não foi solto
   const pressing = useRef<{ pointerId: number } | null>(null);
   // Escolha mais recente (o efeito que ouve o ponteiro não é recriado a cada render)
   const chooseRef = useRef<(index: number) => void>(() => undefined);
   const choseByPress = useRef(false);
+
+  const sections = [
+    ...(filter ? [section(filter.label, filter.options, filter.value, filter.onChange)] : []),
+    section("Ordenar por", options, value, onChange),
+  ];
+  const items = sections.flatMap((s) => s.items);
+  const menuLabel = filter ? `${filter.label} e ordem` : "Ordenar por";
 
   useEffect(() => {
     if (!open) {
@@ -99,15 +148,13 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
     }
   }
 
-  function choose(option: SortOption<S>, returnFocus = true) {
-    if (option.value !== value) {
-      onChange(option.value);
-    }
+  function choose(item: Item, returnFocus = true) {
+    item.pick();
     close(returnFocus);
   }
 
   useEffect(() => {
-    chooseRef.current = (index) => choose(options[index], false);
+    chooseRef.current = (index) => choose(items[index], false);
   });
 
   function handleButtonPointerDown(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -138,10 +185,10 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
 
   function handleKeyDown(event: KeyboardEvent<HTMLUListElement>) {
     const moves: Record<string, number> = {
-      ArrowDown: active < 0 ? 0 : (active + 1) % options.length,
-      ArrowUp: active < 0 ? options.length - 1 : (active - 1 + options.length) % options.length,
+      ArrowDown: active < 0 ? 0 : (active + 1) % items.length,
+      ArrowUp: active < 0 ? items.length - 1 : (active - 1 + items.length) % items.length,
       Home: 0,
-      End: options.length - 1,
+      End: items.length - 1,
     };
     if (event.key in moves) {
       event.preventDefault();
@@ -149,7 +196,7 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
     } else if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       if (active >= 0) {
-        choose(options[active]);
+        choose(items[active]);
       }
     } else if (event.key === "Escape") {
       event.preventDefault();
@@ -157,6 +204,32 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
     } else if (event.key === "Tab") {
       setOpen(false);
     }
+  }
+
+  function renderOption(item: Item) {
+    const index = items.indexOf(item);
+    return (
+      <li
+        key={item.key}
+        id={`${id}-${index}`}
+        data-index={index}
+        role="option"
+        aria-selected={item.selected}
+        className={index === active ? "menu-option is-active" : "menu-option"}
+        onPointerEnter={() => setActive(index)}
+        onClick={() => {
+          // Clique sem ponteiro (leitor de tela); com ponteiro, o pointerup já escolheu
+          if (choseByPress.current) {
+            choseByPress.current = false;
+            return;
+          }
+          choose(item, false);
+        }}
+      >
+        <CheckIcon className="icon menu-check" aria-hidden />
+        {item.label}
+      </li>
+    );
   }
 
   const hidden = reduceMotion ? { opacity: 0 } : { opacity: 0, scale: 0.96, y: -4 };
@@ -167,7 +240,11 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
         ref={buttonRef}
         type="button"
         className="sort-button"
-        aria-label={`Ordenar por ${selected.label}`}
+        aria-label={
+          selectedFilter
+            ? `${filter?.label} ${selectedFilter.label}, ordenar por ${selected.label}`
+            : `Ordenar por ${selected.label}`
+        }
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? `${id}-list` : undefined}
@@ -175,6 +252,7 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
         // O ponteiro já abriu ou fechou no pointerdown; o clique só vale pelo teclado (Enter/Espaço)
         onClick={(event) => event.detail === 0 && (open ? setOpen(false) : openMenu())}
       >
+        {/* Igual em todas as telas; a situação escolhida aparece no cabeçalho e no menu */}
         <span className="secondary">Ordenar por</span>
         <span className="sort-value">{selected.label}</span>
         <UnfoldMoreIcon className="icon" aria-hidden />
@@ -185,7 +263,7 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
             ref={listRef}
             id={`${id}-list`}
             role="listbox"
-            aria-label="Ordenar por"
+            aria-label={menuLabel}
             aria-activedescendant={active >= 0 ? `${id}-${active}` : undefined}
             tabIndex={-1}
             className="menu"
@@ -199,28 +277,17 @@ export function SortMenu<S extends string>({ options, value, onChange }: Props<S
             onPointerDown={handleListPointerDown}
             onPointerLeave={() => setActive(-1)}
           >
-            {options.map((option, index) => (
-              <li
-                key={option.value}
-                id={`${id}-${index}`}
-                data-index={index}
-                role="option"
-                aria-selected={option.value === value}
-                className={index === active ? "menu-option is-active" : "menu-option"}
-                onPointerEnter={() => setActive(index)}
-                onClick={() => {
-                  // Clique sem ponteiro (leitor de tela); com ponteiro, o pointerup já escolheu
-                  if (choseByPress.current) {
-                    choseByPress.current = false;
-                    return;
-                  }
-                  choose(option, false);
-                }}
-              >
-                <CheckIcon className="icon menu-check" aria-hidden />
-                {option.label}
-              </li>
-            ))}
+            {/* Sem filtro, uma lista simples; com filtro, um grupo com título por seção */}
+            {sections.length === 1
+              ? sections[0].items.map(renderOption)
+              : sections.map((s) => (
+                  <li key={s.label} role="group" aria-label={s.label} className="menu-group">
+                    <span className="menu-section" aria-hidden>
+                      {s.label}
+                    </span>
+                    <ul role="none">{s.items.map(renderOption)}</ul>
+                  </li>
+                ))}
           </motion.ul>
         )}
       </AnimatePresence>

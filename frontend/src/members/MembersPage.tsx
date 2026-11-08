@@ -20,10 +20,9 @@ export function MembersPage() {
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Member | null>(null);
 
-  // A ordem e o total vêm do back: depois de salvar ou excluir, a página é buscada de novo
+  // Salvar ou excluir avisa as listagens (api/changes), que buscam a página de novo
   function handleSaved() {
     setEditing(null);
-    members.reload();
   }
 
   return (
@@ -92,7 +91,6 @@ export function MembersPage() {
             onConfirm={async () => {
               await membersApi.remove(deleting.id);
               setDeleting(null);
-              members.reload();
             }}
             onClose={() => setDeleting(null)}
           />

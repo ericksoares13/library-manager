@@ -27,10 +27,9 @@ export function BooksPage() {
   const [editing, setEditing] = useState<Editing>(null);
   const [deleting, setDeleting] = useState<Book | null>(null);
 
-  // A ordem e o total vêm do back: depois de salvar ou excluir, a página é buscada de novo
+  // Salvar ou excluir avisa as listagens (api/changes), que buscam a página de novo
   function handleSaved() {
     setEditing(null);
-    books.reload();
   }
 
   return (
@@ -102,7 +101,6 @@ export function BooksPage() {
             onConfirm={async () => {
               await booksApi.remove(deleting.id);
               setDeleting(null);
-              books.reload();
             }}
             onClose={() => setDeleting(null)}
           />

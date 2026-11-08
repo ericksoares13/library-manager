@@ -1,3 +1,5 @@
+import { notifyDataChanged } from "./changes";
+
 /** Erro HTTP da API, com a mensagem do `ApiError` do back (em inglês) e o status. */
 export class ApiError extends Error {
   readonly status: number;
@@ -16,6 +18,9 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const error = await response.json().catch(() => null);
     throw new ApiError(error?.message ?? response.statusText, response.status);
+  }
+  if ((init?.method ?? "GET") !== "GET") {
+    notifyDataChanged();
   }
   return response.status === 204 ? (undefined as T) : response.json();
 }
