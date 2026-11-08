@@ -290,6 +290,8 @@ h2 {
   color: var(--text);
   background: var(--fill);
   cursor: pointer;
+  /* Pressionar e deslizar até a opção: no toque, o gesto não rola a página */
+  touch-action: none;
   transition: transform 100ms ease-out;
 }
 
@@ -319,6 +321,7 @@ h2 {
 
 .menu {
   position: absolute;
+  touch-action: none;
   top: calc(100% + 0.375rem);
   right: 0;
   z-index: 20;

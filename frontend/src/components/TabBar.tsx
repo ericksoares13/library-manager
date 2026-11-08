@@ -22,13 +22,8 @@ type Props = {
 // Movimento mínimo antes de começar a arrastar: um toque com tremida continua sendo toque
 const DRAG_THRESHOLD = 4;
 
-// Quanto a pílula pode encolher ao ser empurrada contra a borda (fração da largura)
-const MAX_SQUISH = 0.2;
-
-// Projeção do momento e resistência progressiva: fórmulas da skill apple-design (seções 6 e 9)
+// Projeção do momento: fórmula da skill apple-design (seção 6)
 const project = (velocity: number, rate = 0.99) => ((velocity / 1000) * rate) / (1 - rate);
-const rubberband = (overshoot: number, dimension: number, constant = 0.55) =>
-  (overshoot * dimension * constant) / (dimension + constant * Math.abs(overshoot));
 
 /** Largura da pílula na posição x: interpola entre as larguras das abas vizinhas. */
 function widthAt(x: number, segments: Segment[]) {
@@ -52,8 +47,8 @@ const nearest = (x: number, segments: Segment[]) =>
 
 /**
  * Abas em controle segmentado. A pílula desliza até a aba tocada e também pode ser arrastada,
- * como no iOS: segue o ponteiro 1:1 sem sair do trilho (empurrada contra a borda, encolhe um
- * pouco) e, ao soltar, vai para a aba mais próxima de onde o gesto levaria.
+ * como no iOS: segue o ponteiro 1:1 sem sair do trilho (na ponta, só para) e, ao soltar, vai
+ * para a aba mais próxima de onde o gesto levaria.
  */
 export function TabBar({ tabs, active, label }: Props) {
   const reduceMotion = useReducedMotion();
@@ -71,23 +66,14 @@ export function TabBar({ tabs, active, label }: Props) {
   );
   const suppressClick = useRef(false);
   const [measured, setMeasured] = useState(false);
-  const [pressed, setPressed] = useState(false);
-  // Posição no trilho (decide a aba) e compressão contra a borda (< 0 esquerda, > 0 direita)
+  // Posição da pílula no trilho; a largura acompanha, entre as larguras das abas vizinhas
   const position = useMotionValue(0);
-  const squish = useMotionValue(0);
-  // O que aparece na tela: a pílula encolhe colada na borda contra a qual é empurrada
-  const x = useMotionValue(0);
   const width = useMotionValue(0);
 
-  useEffect(() => {
-    const render = () => {
-      const s = squish.get();
-      x.set(position.get() + Math.max(s, 0));
-      width.set(widthAt(position.get(), segments.current) - Math.abs(s));
-    };
-    const unsubscribe = [position.on("change", render), squish.on("change", render)];
-    return () => unsubscribe.forEach((stop) => stop());
-  }, [position, squish, x, width]);
+  useEffect(
+    () => position.on("change", (x) => width.set(widthAt(x, segments.current))),
+    [position, width],
+  );
 
   useLayoutEffect(() => {
     const measure = () => {
@@ -97,14 +83,15 @@ export function TabBar({ tabs, active, label }: Props) {
       });
       const segment = segments.current[target.current];
       position.jump(segment.x);
-      x.jump(segment.x);
       width.jump(segment.width);
       setMeasured(true);
     };
     measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [tabs, position, x, width]);
+    // Mede de novo quando as abas mudam de tamanho (janela redimensionada, fonte maior)
+    const observer = typeof ResizeObserver === "undefined" ? null : new ResizeObserver(measure);
+    tabRefs.current.forEach((element) => observer?.observe(element));
+    return () => observer?.disconnect();
+  }, [tabs, position, width]);
 
   const moveTo = useCallback(
     (index: number, velocity = 0) => {
@@ -135,7 +122,6 @@ export function TabBar({ tabs, active, label }: Props) {
       return;
     }
     position.stop();
-    squish.stop();
     drag.current = {
       pointerId: event.pointerId,
       grab: event.clientX - position.get(),
@@ -143,7 +129,6 @@ export function TabBar({ tabs, active, label }: Props) {
       moved: false,
     };
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    setPressed(true);
   }
 
   function handlePointerMove(event: PointerEvent<HTMLElement>) {
@@ -155,14 +140,10 @@ export function TabBar({ tabs, active, label }: Props) {
       return;
     }
     current.moved = true;
-    const raw = event.clientX - current.grab;
     const min = segments.current[0].x;
     const max = segments.current[segments.current.length - 1].x;
-    const clamped = Math.min(max, Math.max(min, raw));
-    // Além da borda a pílula não anda: encolhe com resistência crescente, até MAX_SQUISH
-    const limit = widthAt(clamped, segments.current) * MAX_SQUISH;
-    position.set(clamped);
-    squish.set(Math.max(-limit, Math.min(limit, rubberband(raw - clamped, limit * 4))));
+    // Na ponta do trilho a pílula para (sem encolher contra a borda)
+    position.set(Math.min(max, Math.max(min, event.clientX - current.grab)));
   }
 
   function finishDrag(event: PointerEvent<HTMLElement>, cancelled: boolean) {
@@ -171,16 +152,10 @@ export function TabBar({ tabs, active, label }: Props) {
       return;
     }
     drag.current = null;
-    setPressed(false);
     if (!current.moved) {
       return;
     }
     suppressClick.current = true;
-    if (reduceMotion) {
-      squish.jump(0);
-    } else {
-      animate(squish, 0, settle);
-    }
     if (cancelled) {
       moveTo(activeIndex);
       return;
@@ -211,14 +186,7 @@ export function TabBar({ tabs, active, label }: Props) {
       }}
     >
       {measured && (
-        <motion.span
-          className="tab-indicator"
-          aria-hidden
-          style={{ x, width }}
-          initial={false}
-          animate={{ scale: pressed && !reduceMotion ? 0.95 : 1 }}
-          transition={settle}
-        />
+        <motion.span className="tab-indicator" aria-hidden style={{ x: position, width }} />
       )}
       <ul>
         {tabs.map((tab) => (

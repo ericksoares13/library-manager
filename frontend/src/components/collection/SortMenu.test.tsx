@@ -42,6 +42,71 @@ describe("Menu de ordenação", () => {
     );
   });
 
+  it("escolhe ao pressionar o botão, deslizar até a opção e soltar", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<SortMenu options={options} value="TITLE" onChange={onChange} />);
+    await user.pointer({
+      keys: "[MouseLeft>]",
+      target: screen.getByRole("button", { name: "Ordenar por Título" }),
+    });
+
+    // Act
+    await user.pointer([
+      { target: screen.getByRole("option", { name: "Autor" }) },
+      { keys: "[/MouseLeft]" },
+    ]);
+
+    // Assert
+    expect(onChange).toHaveBeenCalledWith("AUTHOR");
+    await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
+  });
+
+  it("escolhe ao pressionar uma opção, deslizar até outra e soltar", async () => {
+    // Arrange
+    const { user, onChange } = await renderOpen();
+    await user.pointer({
+      keys: "[MouseLeft>]",
+      target: screen.getByRole("option", { name: "Título" }),
+    });
+
+    // Act
+    await user.pointer([
+      { target: screen.getByRole("option", { name: "Mais recentes" }) },
+      { keys: "[/MouseLeft]" },
+    ]);
+
+    // Assert
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith("RECENT");
+  });
+
+  it("escolhe com um clique na opção", async () => {
+    // Arrange
+    const { user, onChange } = await renderOpen();
+
+    // Act
+    await user.click(screen.getByRole("option", { name: "Autor" }));
+
+    // Assert
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange).toHaveBeenCalledWith("AUTHOR");
+    await waitFor(() => expect(screen.queryByRole("listbox")).not.toBeInTheDocument());
+  });
+
+  it("abre pelo teclado", async () => {
+    // Arrange
+    const user = userEvent.setup();
+    render(<SortMenu options={options} value="TITLE" onChange={vi.fn()} />);
+    screen.getByRole("button", { name: "Ordenar por Título" }).focus();
+
+    // Act
+    await user.keyboard("{Enter}");
+
+    // Assert
+    expect(screen.getByRole("listbox", { name: "Ordenar por" })).toBeInTheDocument();
+  });
   it("escolhe pelo teclado com as setas e Enter", async () => {
     // Arrange
     const { user, onChange } = await renderOpen();
