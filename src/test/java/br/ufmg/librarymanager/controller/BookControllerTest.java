@@ -33,7 +33,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @WebMvcTest(BookController.class)
 class BookControllerTest {
 
-    private static final String ISBN = "9788535910663";
+    private static final String ISBN = "9788575201176";
 
     private static final BookRequest VALID_REQUEST =
             new BookRequest("Dom Casmurro", "Machado de Assis", ISBN, 2);
@@ -41,7 +41,7 @@ class BookControllerTest {
     private static final String VALID_BODY =
             """
             {"title": "Dom Casmurro", "author": "Machado de Assis",
-             "isbn": "9788535910663", "totalCopies": 2}
+             "isbn": "9788575201176", "totalCopies": 2}
             """;
 
     // Título vazio e ISBN curto: a resposta lista os dois erros, ordenados por campo

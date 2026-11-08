@@ -10,7 +10,7 @@ function book(overrides: Partial<Book> = {}): Book {
     id: "b1",
     title: "Dom Casmurro",
     author: "Machado de Assis",
-    isbn: "9788535910663",
+    isbn: "9788575201176",
     totalCopies: 2,
     availableCopies: 2,
     ...overrides,
@@ -244,11 +244,11 @@ describe("Página de livros", () => {
         method: "POST",
         url: "/api/books",
         status: 409,
-        body: { message: "A book with ISBN 9788535910663 already exists" },
+        body: { message: "A book with ISBN 9788575201176 already exists" },
       },
     );
     const user = await renderLoaded();
-    const dialog = await fillNewBookForm(user, "9788535910663");
+    const dialog = await fillNewBookForm(user, "9788575201176");
 
     // Act
     await user.click(within(dialog).getByRole("button", { name: "Salvar" }));

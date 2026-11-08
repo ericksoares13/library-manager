@@ -12,8 +12,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 class BookRequestTest {
 
     @ParameterizedTest(name = "ISBN {0}")
-    @ValueSource(strings = {"9788535910663", "8535910662"})
-    @DisplayName("Aceita ISBN com 13 ou 10 dígitos")
+    @ValueSource(strings = {"9788575201176", "8535910662", "080442957X"})
+    @DisplayName("Aceita ISBN-13 e ISBN-10 válidos, inclusive com X no fim")
     void givenIsbnWithThirteenOrTenDigits_whenValidate_thenHasNoViolations(final String isbn) {
         // Arrange
         final BookRequest request = new BookRequest("Dom Casmurro", "Machado", isbn, 1);
@@ -39,13 +39,27 @@ class BookRequestTest {
         Assertions.assertEquals(Set.of("isbn: isbn must have 10 or 13 digits"), violations);
     }
 
+    @ParameterizedTest(name = "ISBN {0}")
+    @ValueSource(strings = {"9788575201177", "8535910663"})
+    @DisplayName("Rejeita ISBN-13 e ISBN-10 com o dígito verificador errado")
+    void givenIsbnWithWrongCheckDigit_whenValidate_thenReportsInvalidCheckDigit(final String isbn) {
+        // Arrange
+        final BookRequest request = new BookRequest("Dom Casmurro", "Machado", isbn, 1);
+
+        // Act
+        final Set<String> violations = ConstraintViolations.of(request);
+
+        // Assert
+        Assertions.assertEquals(Set.of("isbn: isbn has an invalid check digit"), violations);
+    }
+
     @ParameterizedTest(name = "título e autor = {0}")
     @NullAndEmptySource
     @ValueSource(strings = {"   "})
     @DisplayName("Exige título e autor preenchidos")
     void givenBlankTitleAndAuthor_whenValidate_thenReportsBothFields(final String blank) {
         // Arrange
-        final BookRequest request = new BookRequest(blank, blank, "9788535910663", 1);
+        final BookRequest request = new BookRequest(blank, blank, "9788575201176", 1);
 
         // Act
         final Set<String> violations = ConstraintViolations.of(request);
@@ -59,7 +73,7 @@ class BookRequestTest {
     @DisplayName("Exige pelo menos um exemplar")
     void givenZeroCopies_whenValidate_thenReportsMinimumCopies() {
         // Arrange
-        final BookRequest request = new BookRequest("Dom Casmurro", "Machado", "9788535910663", 0);
+        final BookRequest request = new BookRequest("Dom Casmurro", "Machado", "9788575201176", 0);
 
         // Act
         final Set<String> violations = ConstraintViolations.of(request);

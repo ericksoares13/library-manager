@@ -27,7 +27,7 @@ import org.springframework.data.domain.Pageable;
 @ExtendWith(MockitoExtension.class)
 class BookServiceTest {
 
-    private static final String ISBN = "9788535910663";
+    private static final String ISBN = "9788575201176";
 
     @Mock private BookRepository bookRepository;
 

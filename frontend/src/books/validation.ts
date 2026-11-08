@@ -25,9 +25,23 @@ export function toBookInput(form: BookForm): BookInput {
   return {
     title: form.title.trim(),
     author: form.author.trim(),
-    isbn: form.isbn.trim(),
+    // "x" minúsculo no fim do ISBN-10 vale o mesmo que "X"
+    isbn: form.isbn.trim().toUpperCase(),
     totalCopies: Number(form.totalCopies),
   };
+}
+
+/**
+ * Dígito verificador do ISBN (mesma regra do `IsbnValidator` do back). ISBN-13: dígitos com pesos
+ * 1 e 3 alternados, soma múltipla de 10. ISBN-10: pesos de 10 a 1 ("X" no fim vale 10), soma
+ * múltipla de 11.
+ */
+export function hasValidCheckDigit(isbn: string) {
+  const digits = [...isbn].map((char) => (char === "X" ? 10 : Number(char)));
+  if (digits.length === 13) {
+    return digits.reduce((sum, digit, i) => sum + digit * (i % 2 === 0 ? 1 : 3), 0) % 10 === 0;
+  }
+  return digits.reduce((sum, digit, i) => sum + digit * (10 - i), 0) % 11 === 0;
 }
 
 /**
@@ -44,8 +58,10 @@ export function validateBook(form: BookForm, borrowedCopies = 0): BookFormErrors
   }
   if (!form.isbn.trim()) {
     errors.isbn = "Informe o ISBN.";
-  } else if (!/^(\d{10}|\d{13})$/.test(form.isbn.trim())) {
+  } else if (!/^(\d{9}[\dX]|\d{13})$/.test(form.isbn.trim().toUpperCase())) {
     errors.isbn = "O ISBN deve ter 10 ou 13 dígitos.";
+  } else if (!hasValidCheckDigit(form.isbn.trim().toUpperCase())) {
+    errors.isbn = "ISBN inválido: confira os dígitos.";
   }
   const copies = Number(form.totalCopies);
   if (!/^\d+$/.test(form.totalCopies.trim()) || copies < 1) {

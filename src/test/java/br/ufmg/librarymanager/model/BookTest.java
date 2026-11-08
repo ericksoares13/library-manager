@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 class BookTest {
 
     private static Book bookWithCopies(final int totalCopies) {
-        return new Book("Dom Casmurro", "Machado de Assis", "9788535910663", totalCopies);
+        return new Book("Dom Casmurro", "Machado de Assis", "9788575201176", totalCopies);
     }
 
     @Test
