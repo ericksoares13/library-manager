@@ -4,8 +4,11 @@ import org.springframework.data.domain.Sort;
 
 /** Ordenações da listagem de empréstimos (parâmetro `sort`). O id desempata: páginas estáveis. */
 public enum LoanSort {
-    /** Vencimento mais próximo primeiro (os atrasados aparecem antes). */
-    DUE_DATE(Sort.by("dueDate")),
+    /**
+     * Pendentes primeiro, pelo vencimento mais próximo (os atrasados aparecem antes); depois os
+     * devolvidos, pela data de devolução. No Mongo o `returnDate` vazio vem antes de qualquer data.
+     */
+    DUE_DATE(Sort.by("returnDate", "dueDate")),
     RECENT(Sort.by(Sort.Direction.DESC, "loanDate", "id"));
 
     private final Sort sort;

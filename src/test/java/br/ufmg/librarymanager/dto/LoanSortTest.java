@@ -9,8 +9,8 @@ import org.springframework.data.domain.Sort;
 class LoanSortTest {
 
     @Test
-    @DisplayName("Desempata pelo id para as páginas não repetirem empréstimos")
-    void givenSortByDueDate_whenToSort_thenEndsWithIdTieBreaker() {
+    @DisplayName("Pendentes antes dos devolvidos e o id desempata para não repetir empréstimos")
+    void givenSortByDueDate_whenToSort_thenPendingFirstAndIdTieBreaker() {
         // Arrange
         final LoanSort sort = LoanSort.DUE_DATE;
 
@@ -18,6 +18,6 @@ class LoanSortTest {
         final Sort result = sort.toSort();
 
         // Assert
-        Assertions.assertEquals(Sort.by("dueDate", "id"), result);
+        Assertions.assertEquals(Sort.by("returnDate", "dueDate", "id"), result);
     }
 }
