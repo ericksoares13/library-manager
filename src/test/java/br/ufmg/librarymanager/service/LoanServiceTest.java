@@ -1,19 +1,26 @@
 package br.ufmg.librarymanager.service;
 
 import br.ufmg.librarymanager.dto.BorrowRequest;
+import br.ufmg.librarymanager.dto.LoanResponse;
+import br.ufmg.librarymanager.dto.LoanSort;
+import br.ufmg.librarymanager.dto.LoanStatus;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Book;
 import br.ufmg.librarymanager.model.Loan;
 import br.ufmg.librarymanager.model.Member;
 import br.ufmg.librarymanager.repository.BookRepository;
+import br.ufmg.librarymanager.repository.IdOnly;
+import br.ufmg.librarymanager.repository.LoanFilter;
 import br.ufmg.librarymanager.repository.LoanRepository;
+import br.ufmg.librarymanager.repository.MemberRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +30,9 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.test.util.ReflectionTestUtils;
 
 @DisplayName("Serviço de empréstimos")
 @ExtendWith(MockitoExtension.class)
@@ -39,6 +49,8 @@ class LoanServiceTest {
 
     @Mock private BookRepository bookRepository;
 
+    @Mock private MemberRepository memberRepository;
+
     @Mock private BookService bookService;
 
     @Mock private MemberService memberService;
@@ -51,6 +63,7 @@ class LoanServiceTest {
                 new LoanService(
                         this.loanRepository,
                         this.bookRepository,
+                        this.memberRepository,
                         this.bookService,
                         this.memberService,
                         FIXED_CLOCK);
@@ -60,15 +73,27 @@ class LoanServiceTest {
         return new Book("Dom Casmurro", "Machado de Assis", "9788535910663", totalCopies);
     }
 
+    // O id é atribuído pelo Mongo ao salvar; as entidades não têm setter
+    private static <T> T withId(final T entity, final String id) {
+        ReflectionTestUtils.setField(entity, "id", id);
+        return entity;
+    }
+
+    private static IdOnly idOnly(final String id) {
+        return () -> id;
+    }
+
     private void bookAndMemberExist(final Book book) {
         Mockito.when(this.bookService.findById("b1")).thenReturn(book);
         Mockito.when(this.memberService.findById("m1"))
                 .thenReturn(new Member("Ana", "ana@example.com"));
     }
 
-    private void loanAndBookExist(final Loan loan, final Book book) {
+    private void loanBookAndMemberExist(final Loan loan, final Book book) {
         Mockito.when(this.loanRepository.findById("l1")).thenReturn(Optional.of(loan));
         Mockito.when(this.bookService.findById("b1")).thenReturn(book);
+        Mockito.when(this.memberService.findById("m1"))
+                .thenReturn(new Member("Ana", "ana@example.com"));
     }
 
     private void loanSaveReturnsArgument() {
@@ -85,12 +110,14 @@ class LoanServiceTest {
         this.loanSaveReturnsArgument();
 
         // Act
-        final Loan loan = this.loanService.borrow(REQUEST);
+        final LoanResponse loan = this.loanService.borrow(REQUEST);
 
         // Assert
-        Assertions.assertEquals("b1", loan.getBookId());
-        Assertions.assertEquals("m1", loan.getMemberId());
-        Assertions.assertEquals(TODAY, loan.getLoanDate());
+        Assertions.assertEquals("b1", loan.bookId());
+        Assertions.assertEquals("m1", loan.memberId());
+        Assertions.assertEquals("Dom Casmurro", loan.bookTitle());
+        Assertions.assertEquals("Ana", loan.memberName());
+        Assertions.assertEquals(TODAY, loan.loanDate());
         Assertions.assertEquals(1, book.getAvailableCopies());
         Mockito.verify(this.bookRepository).save(book);
     }
@@ -105,10 +132,10 @@ class LoanServiceTest {
         this.loanSaveReturnsArgument();
 
         // Act
-        final Loan loan = this.loanService.borrow(REQUEST);
+        final LoanResponse loan = this.loanService.borrow(REQUEST);
 
         // Assert
-        Assertions.assertEquals(TODAY, loan.getLoanDate());
+        Assertions.assertEquals(TODAY, loan.loanDate());
     }
 
     @Test
@@ -209,14 +236,15 @@ class LoanServiceTest {
         // Arrange
         final Book bookWithOneBorrowedCopy = bookWithCopies(2);
         bookWithOneBorrowedCopy.borrowCopy();
-        this.loanAndBookExist(new Loan("b1", "m1", TODAY.minusDays(5)), bookWithOneBorrowedCopy);
+        this.loanBookAndMemberExist(
+                new Loan("b1", "m1", TODAY.minusDays(5)), bookWithOneBorrowedCopy);
         this.loanSaveReturnsArgument();
 
         // Act
-        final Loan returned = this.loanService.returnLoan("l1");
+        final LoanResponse returned = this.loanService.returnLoan("l1");
 
         // Assert
-        Assertions.assertEquals(TODAY, returned.getReturnDate());
+        Assertions.assertEquals(TODAY, returned.returnDate());
         Assertions.assertEquals(2, bookWithOneBorrowedCopy.getAvailableCopies());
         Mockito.verify(this.bookRepository).save(bookWithOneBorrowedCopy);
     }
@@ -255,32 +283,77 @@ class LoanServiceTest {
     }
 
     @Test
-    @DisplayName("Lista os empréstimos do membro")
-    void givenExistingMember_whenFindByMember_thenReturnsLoansOfThatMember() {
+    @DisplayName("Lista a página com o título do livro, o nome do membro e o atraso")
+    void givenLoansOnPage_whenSearchWithoutQuery_thenFillsTitleNameAndOverdue() {
         // Arrange
-        final List<Loan> loans = List.of(new Loan("b1", "m1", TODAY));
-        Mockito.when(this.loanRepository.findByMemberId("m1")).thenReturn(loans);
+        final Book book = withId(bookWithCopies(2), "b1");
+        final Member member = withId(new Member("Ana", "ana@example.com"), "m1");
+        final Loan overdueLoan = new Loan("b1", "m1", TODAY.minusDays(Loan.LOAN_PERIOD_DAYS + 1));
+        Mockito.when(
+                        this.loanRepository.search(
+                                LoanFilter.of(LoanStatus.ACTIVE, TODAY),
+                                Pages.of(0, 20, LoanSort.DUE_DATE.toSort())))
+                .thenReturn(new PageImpl<>(List.of(overdueLoan)));
+        Mockito.when(this.bookRepository.findAllById(Set.of("b1"))).thenReturn(List.of(book));
+        Mockito.when(this.memberRepository.findAllById(Set.of("m1"))).thenReturn(List.of(member));
 
         // Act
-        final List<Loan> result = this.loanService.findByMember("m1");
+        final Page<LoanResponse> page =
+                this.loanService.search("", LoanStatus.ACTIVE, LoanSort.DUE_DATE, 0, 20);
 
         // Assert
-        Assertions.assertEquals(loans, result);
+        final LoanResponse loan = page.getContent().getFirst();
+        Assertions.assertEquals("Dom Casmurro", loan.bookTitle());
+        Assertions.assertEquals("Ana", loan.memberName());
+        Assertions.assertTrue(loan.overdue());
     }
 
     @Test
-    @DisplayName("Listar empréstimos de membro inexistente lança NotFoundException")
-    void givenUnknownMember_whenFindByMember_thenThrowsNotFoundException() {
+    @DisplayName("Busca pelos livros e membros que casam com o texto, sem acentos")
+    void givenQuery_whenSearch_thenFiltersByMatchingBooksAndMembers() {
         // Arrange
-        Mockito.when(this.memberService.findById("missing"))
-                .thenThrow(new NotFoundException("Member not found: missing"));
+        Mockito.when(
+                        this.bookRepository
+                                .findIdsByTitleKeyContainingOrAuthorKeyContainingOrIsbnContaining(
+                                        "jose", "jose", "jose"))
+                .thenReturn(List.of(idOnly("b1")));
+        Mockito.when(
+                        this.memberRepository.findIdsByNameKeyContainingOrEmailContainingIgnoreCase(
+                                "jose", "jose"))
+                .thenReturn(List.of(idOnly("m1"), idOnly("m2")));
+        final LoanFilter expected =
+                LoanFilter.of(LoanStatus.ALL, TODAY).matching(List.of("b1"), List.of("m1", "m2"));
+        Mockito.when(
+                        this.loanRepository.search(
+                                ArgumentMatchers.eq(expected), ArgumentMatchers.any()))
+                .thenReturn(Page.empty());
 
         // Act
-        final NotFoundException thrown =
-                Assertions.assertThrows(
-                        NotFoundException.class, () -> this.loanService.findByMember("missing"));
+        final Page<LoanResponse> page =
+                this.loanService.search("José", LoanStatus.ALL, LoanSort.RECENT, 0, 20);
 
         // Assert
-        Assertions.assertEquals("Member not found: missing", thrown.getMessage());
+        Assertions.assertTrue(page.isEmpty());
+    }
+
+    @Test
+    @DisplayName("Livro e membro excluídos depois da devolução ficam sem título e nome")
+    void givenBookAndMemberDeleted_whenSearch_thenTitleAndNameAreNull() {
+        // Arrange
+        final Loan returnedLoan = new Loan("b1", "m1", TODAY.minusDays(5));
+        returnedLoan.markReturned(TODAY.minusDays(1));
+        Mockito.when(this.loanRepository.search(ArgumentMatchers.any(), ArgumentMatchers.any()))
+                .thenReturn(new PageImpl<>(List.of(returnedLoan)));
+        Mockito.when(this.bookRepository.findAllById(Set.of("b1"))).thenReturn(List.of());
+        Mockito.when(this.memberRepository.findAllById(Set.of("m1"))).thenReturn(List.of());
+
+        // Act
+        final Page<LoanResponse> page =
+                this.loanService.search("", LoanStatus.RETURNED, LoanSort.RECENT, 0, 20);
+
+        // Assert
+        final LoanResponse loan = page.getContent().getFirst();
+        Assertions.assertNull(loan.bookTitle());
+        Assertions.assertNull(loan.memberName());
     }
 }
