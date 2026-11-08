@@ -10,3 +10,4 @@ export { default as EditIcon } from "@material-symbols/svg-300/rounded/edit.svg?
 export { default as GroupIcon } from "@material-symbols/svg-300/rounded/group.svg?react";
 export { default as MenuBookIcon } from "@material-symbols/svg-300/rounded/menu_book.svg?react";
 export { default as SearchIcon } from "@material-symbols/svg-300/rounded/search.svg?react";
+export { default as SwapIcon } from "@material-symbols/svg-300/rounded/swap_horiz.svg?react";

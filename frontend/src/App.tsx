@@ -1,11 +1,13 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BooksPage } from "./books/BooksPage";
 import { TabBar } from "./components/TabBar";
+import { LoansPage } from "./loans/LoansPage";
 import { MembersPage } from "./members/MembersPage";
 
 const tabs = [
   { hash: "#/livros", label: "Livros", Page: BooksPage },
   { hash: "#/membros", label: "Membros", Page: MembersPage },
+  { hash: "#/emprestimos", label: "Empréstimos", Page: LoansPage },
 ] as const;
 
 // Rota pelo hash: voltar/avançar e recarregar mantêm a tela, sem configurar o servidor
