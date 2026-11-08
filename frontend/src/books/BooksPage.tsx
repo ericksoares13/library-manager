@@ -6,6 +6,7 @@ import { useCollection } from "../components/collection/useCollection";
 import { ConfirmDeleteDialog } from "../components/ConfirmDeleteDialog";
 import { DeleteIcon, EditIcon, MenuBookIcon } from "../components/icons";
 import type { PageProps } from "../App";
+import { BookCover } from "./BookCover";
 import { BookFormSheet } from "./BookFormSheet";
 import { BookPage } from "./BookPage";
 
@@ -57,6 +58,7 @@ export function BooksPage({ param: bookId }: PageProps) {
           onAdd={() => setEditing({})}
           renderItem={(book) => (
             <>
+              <BookCover isbn={book.isbn} title={book.title} size="small" />
               <div className="row-main">
                 <a className="row-title row-link" href={`#/livros/${encodeURIComponent(book.id)}`}>
                   {book.title}

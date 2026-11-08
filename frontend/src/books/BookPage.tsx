@@ -13,6 +13,7 @@ import { BorrowSheet } from "../loans/BorrowSheet";
 import { LoanRow } from "../loans/LoanRow";
 import { emptyByStatus, sortOptions, statusOptions } from "../loans/options";
 import { ReturnDialog } from "../loans/ReturnDialog";
+import { BookCover } from "./BookCover";
 import { BookFormSheet } from "./BookFormSheet";
 
 type Dialog = "edit" | "delete" | "borrow" | { returning: Loan } | null;
@@ -24,7 +25,7 @@ const backLink = (
   </a>
 );
 
-/** Página de um livro: dados, quem pegou emprestado e as ações (emprestar, editar, excluir). */
+/** Página de um livro: capa, dados, quem pegou emprestado e as ações (emprestar, editar, excluir). */
 export function BookPage({ id }: { id: string }) {
   const book = useResource(useCallback((signal) => booksApi.get(id, signal), [id]));
   const loans = useCollection<Loan, LoanSort, LoanStatus>(
@@ -71,12 +72,15 @@ export function BookPage({ id }: { id: string }) {
         title={`Empréstimos de ${title}`}
         header={
           <header className="page-header">
-            <div>
-              <h1 className="display">{title}</h1>
-              <p className="secondary page-count">
-                {author} · ISBN {isbn} · {availableCopies} de {totalCopies}{" "}
-                {totalCopies === 1 ? "exemplar disponível" : "exemplares disponíveis"}
-              </p>
+            <div className="detail-title">
+              <BookCover isbn={isbn} title={title} size="large" />
+              <div>
+                <h1 className="display">{title}</h1>
+                <p className="secondary page-count">
+                  {author} · ISBN {isbn} · {availableCopies} de {totalCopies}{" "}
+                  {totalCopies === 1 ? "exemplar disponível" : "exemplares disponíveis"}
+                </p>
+              </div>
             </div>
             <div className="page-actions">
               <button

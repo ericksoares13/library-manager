@@ -14,6 +14,7 @@
   --scrim: rgba(0, 0, 0, 0.32);
   --shadow-sheet: 0 24px 64px rgba(0, 0, 0, 0.18), 0 2px 8px rgba(0, 0, 0, 0.08);
   --radius: 0.75rem;
+  --cover-small-height: 3rem;
 
   font:
     100%/1.5 system-ui,
@@ -199,6 +200,103 @@ h2 {
 
 .back-link:hover {
   background: var(--fill);
+}
+
+/* Capa do livro (Open Library pelo ISBN) num espaço fixo (a linha e o cabeçalho não mudam de
+   tamanho). A imagem aparece inteira, na proporção dela, centralizada: o zoom sai dela e volta para
+   ela sem recortar. Sem capa, o ícone de livro ocupa o espaço todo */
+.cover {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+}
+
+/* min-width/min-height 0: sem isso o item flex não encolhe abaixo do tamanho natural da imagem */
+.cover img {
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.cover-small {
+  width: 2rem;
+  height: var(--cover-small-height);
+}
+
+.cover-small img,
+.cover-small.cover-placeholder {
+  border-radius: 0.25rem;
+}
+
+.cover-large {
+  width: 5rem;
+  height: 7.5rem;
+}
+
+.cover-large img,
+.cover-large.cover-placeholder {
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.cover-placeholder {
+  background: var(--fill);
+}
+
+.cover-icon {
+  width: 55%;
+  height: 55%;
+  fill: var(--text-secondary);
+}
+
+/* Capa que amplia ao tocar: botão sem aparência própria, só o cursor de lupa */
+.cover-button {
+  padding: 0;
+  border: none;
+  cursor: zoom-in;
+}
+
+.cover-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Capa ampliada: acima de tudo, com o fundo escurecido; clicar em qualquer lugar fecha */
+.cover-zoom-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  cursor: zoom-out;
+  outline: none;
+}
+
+.cover-zoom {
+  position: fixed;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background: var(--fill);
+  box-shadow: var(--shadow-sheet);
+}
+
+/* A miniatura fica embaixo enquanto a imagem grande carrega por cima (mesma proporção da caixa) */
+.cover-zoom img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity 200ms ease-out;
+}
+
+/* Cabeçalho do livro: a capa ao lado do título */
+.detail-title {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  min-width: 0;
 }
 
 /* Ações do cabeçalho de detalhe: editar e excluir antes do botão principal */
@@ -541,10 +639,13 @@ h2 {
   background: var(--surface);
 }
 
+/* Mesma altura em todas as listas: a da linha de livro, com a capa pequena (as linhas sem capa,
+   de membros e empréstimos, não ficam mais baixas) */
 .row {
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-height: calc(var(--cover-small-height) + 1.5rem);
   padding: 0.75rem 0.5rem 0.75rem 1rem;
   background: var(--surface);
 }
