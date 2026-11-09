@@ -75,6 +75,20 @@ jobs:
           flags: ${{ matrix.os }}
           fail_ci_if_error: true
 
+      # Os testes end-to-end sobem a aplicação de verdade: precisam do MongoDB no próprio runner
+      - name: Set up MongoDB
+        uses: ankane/setup-mongodb@v1
+
+      - name: End-to-end tests (Playwright)
+        run: ./gradlew e2eTest
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: playwright-report-${{ matrix.os }}
+          path: frontend/playwright-report/
+
   deploy:
     name: Deploy (Render)
     needs: tests
