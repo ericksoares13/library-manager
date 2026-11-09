@@ -1,4 +1,7 @@
 import type { Loan } from "../api/loans";
+import { BookCover } from "../books/BookCover";
+import { MenuBookIcon } from "../components/icons";
+import { MemberPhoto } from "../members/MemberPhoto";
 import { bookTitleOf, formatDate, loanSituation, memberNameOf } from "./format";
 
 type Props = {
@@ -40,12 +43,36 @@ function MemberName({ loan }: { loan: Loan }) {
   );
 }
 
+/**
+ * Imagem de quem dá nome à linha: a capa do livro ou, na página do livro, a foto do membro.
+ * Excluído depois da devolução: só o ícone.
+ */
+function Thumbnail({ loan, view }: Pick<Props, "loan" | "view">) {
+  if (view === "book") {
+    // Membro excluído chega sem versão de foto: fica o ícone
+    const member = {
+      id: loan.memberId,
+      name: memberNameOf(loan),
+      photoVersion: loan.memberPhotoVersion,
+    };
+    return <MemberPhoto member={member} size="small" />;
+  }
+  return loan.bookTitle && loan.bookIsbn ? (
+    <BookCover isbn={loan.bookIsbn} title={loan.bookTitle} size="small" />
+  ) : (
+    <span className="cover cover-small cover-placeholder" aria-hidden>
+      <MenuBookIcon className="cover-icon" />
+    </span>
+  );
+}
+
 /** Linha de um empréstimo (tela de empréstimos e páginas do membro e do livro). */
 export function LoanRow({ loan, view, onReturn }: Props) {
   const loanDate = `Emprestado em ${formatDate(loan.loanDate)}`;
   const missing = view === "book" ? !loan.memberName : !loan.bookTitle;
   return (
     <>
+      <Thumbnail loan={loan} view={view} />
       <div className="row-main">
         <span className={missing ? "row-title is-missing" : "row-title"}>
           {view === "book" ? <MemberName loan={loan} /> : <BookName loan={loan} />}

@@ -7,9 +7,13 @@ export type Loan = {
   bookId: string;
   /** `null` se o livro foi excluído depois da devolução. */
   bookTitle: string | null;
+  /** `null` se o livro foi excluído depois da devolução. */
+  bookIsbn: string | null;
   memberId: string;
   /** `null` se o membro foi excluído depois da devolução. */
   memberName: string | null;
+  /** `null` sem foto ou se o membro foi excluído depois da devolução. */
+  memberPhotoVersion: number | null;
   loanDate: string;
   dueDate: string;
   returnDate: string | null;

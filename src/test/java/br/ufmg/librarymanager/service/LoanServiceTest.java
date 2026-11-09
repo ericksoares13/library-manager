@@ -283,11 +283,12 @@ class LoanServiceTest {
     }
 
     @Test
-    @DisplayName("Lista a página com o título do livro, o nome do membro e o atraso")
-    void givenLoansOnPage_whenSearchWithoutQuery_thenFillsTitleNameAndOverdue() {
+    @DisplayName("Lista a página com os dados do livro e do membro e o atraso")
+    void givenLoansOnPage_whenSearchWithoutQuery_thenFillsBookMemberAndOverdue() {
         // Arrange
         final Book book = withId(bookWithCopies(2), "b1");
         final Member member = withId(new Member("Ana", "ana@example.com"), "m1");
+        member.changePhoto();
         final Loan overdueLoan = new Loan("b1", "m1", TODAY.minusDays(Loan.LOAN_PERIOD_DAYS + 1));
         Mockito.when(
                         this.loanRepository.search(
@@ -305,7 +306,9 @@ class LoanServiceTest {
         // Assert
         final LoanResponse loan = page.getContent().getFirst();
         Assertions.assertEquals("Dom Casmurro", loan.bookTitle());
+        Assertions.assertEquals("9788575201176", loan.bookIsbn());
         Assertions.assertEquals("Ana", loan.memberName());
+        Assertions.assertEquals(1, loan.memberPhotoVersion());
         Assertions.assertTrue(loan.overdue());
     }
 

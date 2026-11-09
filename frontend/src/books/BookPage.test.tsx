@@ -27,8 +27,10 @@ function loan(overrides: Partial<Loan> = {}): Loan {
     id: "l1",
     bookId: "b1",
     bookTitle: "Dom Casmurro",
+    bookIsbn: "9788575201176",
     memberId: "m1",
     memberName: "Ana Souza",
+    memberPhotoVersion: null,
     loanDate: "2026-11-08",
     dueDate: "2026-11-22",
     returnDate: null,
@@ -82,6 +84,19 @@ describe("Página do livro", () => {
       bookId: "b1",
       status: "ALL",
     });
+  });
+
+  it("mostra a foto de quem pegou emprestado", async () => {
+    // Arrange
+    mockApi(bookRoute(), loansRoute([loan({ memberPhotoVersion: 4 })]));
+
+    // Act
+    render(<BookPage id="b1" />);
+
+    // Assert
+    const list = await screen.findByRole("list", { name: "Empréstimos de Dom Casmurro" });
+    const photo = within(list).getByRole("button", { name: "Ampliar foto de Ana Souza" });
+    expect(photo.querySelector("img")).toHaveAttribute("src", "/api/members/m1/photo?v=4");
   });
 
   it("avisa quando o livro não existe mais", async () => {

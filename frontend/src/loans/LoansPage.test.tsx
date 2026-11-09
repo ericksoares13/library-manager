@@ -15,8 +15,10 @@ function loan(overrides: Partial<Loan> = {}): Loan {
     id: "l1",
     bookId: "b1",
     bookTitle: "Dom Casmurro",
+    bookIsbn: "9788575201176",
     memberId: "m1",
     memberName: "Ana Souza",
+    memberPhotoVersion: null,
     loanDate: "2026-11-08",
     dueDate: "2026-11-22",
     returnDate: null,
@@ -107,6 +109,28 @@ describe("Página de empréstimos", () => {
       status: "ACTIVE",
       sort: "DUE_DATE",
     });
+  });
+
+  it("mostra a capa do livro de cada empréstimo, menos do livro excluído", async () => {
+    // Arrange
+    mockApi(
+      loansRoute([
+        loan(),
+        loan({ id: "l2", bookTitle: null, bookIsbn: null, returnDate: "2026-11-10" }),
+      ]),
+    );
+
+    // Act
+    render(<LoansPage />);
+
+    // Assert
+    const rows = within(await screen.findByRole("list", { name: "Empréstimos" })).getAllByRole(
+      "listitem",
+    );
+    expect(
+      within(rows[0]).getByRole("button", { name: "Ampliar capa de Dom Casmurro" }),
+    ).toBeInTheDocument();
+    expect(within(rows[1]).queryByRole("button", { name: /Ampliar/ })).not.toBeInTheDocument();
   });
 
   it("troca a situação pelo filtro e volta para a primeira página", async () => {
