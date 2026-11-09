@@ -250,6 +250,37 @@ describe("Página de livros", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("não acusa erro no campo vazio ao clicar fora dele sem editar", async () => {
+    // Arrange
+    mockApi({ method: "GET", url: "/api/books", body: page([book()]) });
+    const user = await renderLoaded();
+    await user.click(screen.getByRole("button", { name: "Adicionar" }));
+    const dialog = screen.getByRole("dialog", { name: "Novo livro" });
+
+    // Act
+    await user.click(within(dialog).getByRole("heading", { name: "Novo livro" }));
+
+    // Assert
+    expect(within(dialog).getByLabelText("Título")).not.toHaveAttribute("aria-invalid");
+  });
+
+  it("acusa o erro ao sair do campo depois de editar", async () => {
+    // Arrange
+    mockApi({ method: "GET", url: "/api/books", body: page([book()]) });
+    const user = await renderLoaded();
+    await user.click(screen.getByRole("button", { name: "Adicionar" }));
+    const dialog = screen.getByRole("dialog", { name: "Novo livro" });
+    await user.type(within(dialog).getByLabelText("ISBN"), "123");
+
+    // Act
+    await user.click(within(dialog).getByRole("heading", { name: "Novo livro" }));
+
+    // Assert
+    expect(within(dialog).getByLabelText("ISBN")).toHaveAccessibleDescription(
+      "O ISBN deve ter 10 ou 13 dígitos.",
+    );
+  });
+
   it("mostra no campo ISBN quando ele já está cadastrado", async () => {
     // Arrange
     mockApi(

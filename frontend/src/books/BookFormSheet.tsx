@@ -36,6 +36,8 @@ function toServerError(error: unknown, creating: boolean): ServerError {
 export function BookFormSheet({ book, onClose, onSaved }: Props) {
   const titleId = useId();
   const [form, setForm] = useState<BookForm>(book ? toBookForm(book) : emptyBookForm);
+  // Campos que a pessoa editou e campos que ela editou e já deixou (esses mostram o erro)
+  const [edited, setEdited] = useState<Partial<Record<keyof BookForm, boolean>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof BookForm, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -44,7 +46,8 @@ export function BookFormSheet({ book, onClose, onSaved }: Props) {
   const borrowedCopies = book ? book.totalCopies - book.availableCopies : 0;
   const errors: BookFormErrors = validateBook(form, borrowedCopies);
 
-  // Valida campo a campo depois que a pessoa sai dele (não a cada tecla do primeiro preenchimento)
+  // Valida campo a campo depois que a pessoa edita e sai dele (não a cada tecla do primeiro
+  // preenchimento, nem no campo que ela só atravessou ou deixou ao clicar fora dele)
   const errorOf = (field: keyof BookForm) =>
     (touched[field] || submitted ? errors[field] : undefined) ??
     (serverError?.field === field ? serverError.message : undefined);
@@ -54,11 +57,16 @@ export function BookFormSheet({ book, onClose, onSaved }: Props) {
     error: errorOf(field),
     onChange: (event: { target: { value: string } }) => {
       setForm({ ...form, [field]: event.target.value });
+      setEdited({ ...edited, [field]: true });
       if (serverError?.field === field) {
         setServerError(null);
       }
     },
-    onBlur: () => setTouched({ ...touched, [field]: true }),
+    onBlur: () => {
+      if (edited[field]) {
+        setTouched({ ...touched, [field]: true });
+      }
+    },
   });
 
   async function handleSubmit(event: FormEvent) {

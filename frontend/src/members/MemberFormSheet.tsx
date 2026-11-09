@@ -71,6 +71,8 @@ function useObjectUrl(blob: Blob | null) {
 export function MemberFormSheet({ member, onClose, onSaved }: Props) {
   const titleId = useId();
   const [form, setForm] = useState<MemberForm>(member ? toMemberForm(member) : emptyMemberForm);
+  // Campos que a pessoa editou e campos que ela editou e já deixou (esses mostram o erro)
+  const [edited, setEdited] = useState<Partial<Record<keyof MemberForm, boolean>>>({});
   const [touched, setTouched] = useState<Partial<Record<keyof MemberForm, boolean>>>({});
   const [submitted, setSubmitted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -94,7 +96,8 @@ export function MemberFormSheet({ member, onClose, onSaved }: Props) {
         ? null
         : photoUrl(member);
 
-  // Valida campo a campo depois que a pessoa sai dele (não a cada tecla do primeiro preenchimento)
+  // Valida campo a campo depois que a pessoa edita e sai dele (não a cada tecla do primeiro
+  // preenchimento, nem no campo que ela só atravessou ou deixou ao clicar fora dele)
   const errorOf = (field: keyof MemberForm) =>
     (touched[field] || submitted ? errors[field] : undefined) ??
     (serverError?.field === field ? serverError.message : undefined);
@@ -104,11 +107,16 @@ export function MemberFormSheet({ member, onClose, onSaved }: Props) {
     error: errorOf(field),
     onChange: (event: { target: { value: string } }) => {
       setForm({ ...form, [field]: event.target.value });
+      setEdited({ ...edited, [field]: true });
       if (serverError?.field === field) {
         setServerError(null);
       }
     },
-    onBlur: () => setTouched({ ...touched, [field]: true }),
+    onBlur: () => {
+      if (edited[field]) {
+        setTouched({ ...touched, [field]: true });
+      }
+    },
   });
 
   async function handleSubmit(event: FormEvent) {

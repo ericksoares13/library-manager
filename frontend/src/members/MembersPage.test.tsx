@@ -124,6 +124,20 @@ describe("Página de membros", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
+  it("não acusa erro no campo vazio ao clicar fora dele sem editar", async () => {
+    // Arrange
+    mockApi({ method: "GET", url: "/api/members", body: page([member()]) });
+    const user = await renderLoaded();
+    await user.click(screen.getByRole("button", { name: "Adicionar" }));
+    const dialog = screen.getByRole("dialog", { name: "Novo membro" });
+
+    // Act
+    await user.click(within(dialog).getByRole("heading", { name: "Novo membro" }));
+
+    // Assert
+    expect(within(dialog).getByLabelText("Nome")).not.toHaveAttribute("aria-invalid");
+  });
+
   it("mostra no campo e-mail quando ele já está cadastrado", async () => {
     // Arrange
     mockApi(
