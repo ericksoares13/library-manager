@@ -114,4 +114,18 @@ class GlobalExceptionHandlerTest {
         Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         Assertions.assertEquals(new ApiError("Malformed request body"), response.getBody());
     }
+
+    @Test
+    @DisplayName("Conteúdo inválido responde 400 com a mensagem")
+    void givenBadRequestException_whenHandle_thenRespondsWith400() {
+        // Arrange
+        final BadRequestException exception = new BadRequestException("Photo must be a JPEG");
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleBadRequest(exception);
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        Assertions.assertEquals(new ApiError("Photo must be a JPEG"), response.getBody());
+    }
 }

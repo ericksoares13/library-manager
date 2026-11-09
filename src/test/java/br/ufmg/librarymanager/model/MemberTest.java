@@ -34,4 +34,46 @@ class MemberTest {
         Assertions.assertEquals("ana.souza@example.com", member.getEmail());
         Assertions.assertEquals(SearchKey.of("Ana Souza"), member.getNameKey());
     }
+
+    @Test
+    @DisplayName("Membro novo não tem foto")
+    void givenNewMember_whenGetPhotoVersion_thenReturnsNull() {
+        // Arrange
+        final Member member = new Member("Ana", "ana@example.com");
+
+        // Act
+        final Integer version = member.getPhotoVersion();
+
+        // Assert
+        Assertions.assertNull(version);
+    }
+
+    @Test
+    @DisplayName("Foto nova depois de remover a anterior tem outra versão")
+    void givenRemovedPhoto_whenChangePhoto_thenVersionIsNotReused() {
+        // Arrange
+        final Member member = new Member("Ana", "ana@example.com");
+        member.changePhoto();
+        member.removePhoto();
+
+        // Act
+        member.changePhoto();
+
+        // Assert
+        Assertions.assertEquals(2, member.getPhotoVersion());
+    }
+
+    @Test
+    @DisplayName("Remover a foto deixa o membro sem foto")
+    void givenMemberWithPhoto_whenRemovePhoto_thenHasNoPhoto() {
+        // Arrange
+        final Member member = new Member("Ana", "ana@example.com");
+        member.changePhoto();
+
+        // Act
+        member.removePhoto();
+
+        // Assert
+        Assertions.assertNull(member.getPhotoVersion());
+    }
 }

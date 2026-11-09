@@ -242,8 +242,16 @@ h2 {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
+/* A borda fina marca o tamanho: só o cinza claro some no fundo branco e parece menor que a foto */
 .cover-placeholder {
   background: var(--fill);
+  box-shadow: inset 0 0 0 1px var(--separator);
+}
+
+.cover-large.cover-placeholder {
+  box-shadow:
+    inset 0 0 0 1px var(--separator),
+    0 2px 8px rgba(0, 0, 0, 0.12);
 }
 
 .cover-icon {
@@ -383,6 +391,11 @@ h2 {
 .button.destructive {
   color: #ffffff;
   background: var(--danger);
+}
+
+/* Ação destrutiva secundária (remover a foto): o mesmo botão cinza, só o texto em vermelho */
+.button.danger-text {
+  color: var(--danger);
 }
 
 .icon-button {
@@ -823,6 +836,100 @@ h2 {
 .row-title.is-missing {
   font-weight: 500;
   color: var(--text-secondary);
+}
+
+/* Foto no formulário do membro: a foto (ou o ícone) ao lado das ações, com o tamanho da página do
+   membro */
+.photo-field {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.photo-field .cover img {
+  border-radius: 0.5rem;
+}
+
+.photo-field-actions {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+}
+
+/* Quadro do recorte e da câmera: 2:3, como a foto final; a imagem passa por baixo e só o que está
+   dentro aparece. Arrastar move a imagem (o navegador não rola nem amplia a página aqui) */
+.cropper {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 15rem);
+  aspect-ratio: 2 / 3;
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--fill);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.cropper:active {
+  cursor: grabbing;
+}
+
+.cropper:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.cropper img {
+  position: absolute;
+  max-width: none;
+  pointer-events: none;
+}
+
+.cropper-zoom {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+}
+
+.cropper-zoom input {
+  flex: 1;
+  accent-color: var(--accent);
+}
+
+/* Câmera: a imagem ao vivo preenche o quadro; a frontal aparece espelhada (como um espelho) */
+.camera {
+  cursor: default;
+}
+
+.camera video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.camera video.is-mirrored {
+  transform: scaleX(-1);
+}
+
+.camera-error {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  margin: 0;
+  padding: 1rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.camera-switch {
+  position: absolute;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
 }
 
 /* Campo com busca: a lista de opções flutua logo abaixo do campo, como o menu de ordenação */

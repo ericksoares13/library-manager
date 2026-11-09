@@ -2,11 +2,15 @@ package br.ufmg.librarymanager.service;
 
 import br.ufmg.librarymanager.dto.MemberRequest;
 import br.ufmg.librarymanager.dto.MemberSort;
+import br.ufmg.librarymanager.exception.BadRequestException;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Member;
+import br.ufmg.librarymanager.model.MemberPhoto;
 import br.ufmg.librarymanager.repository.LoanRepository;
+import br.ufmg.librarymanager.repository.MemberPhotoRepository;
 import br.ufmg.librarymanager.repository.MemberRepository;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Assertions;
@@ -29,7 +33,12 @@ class MemberServiceTest {
 
     private static final String EMAIL = "ana@example.com";
 
+    // Começo de um JPEG (marcador SOI): o bastante para a foto ser aceita
+    private static final byte[] JPEG = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, 0x00};
+
     @Mock private MemberRepository memberRepository;
+
+    @Mock private MemberPhotoRepository memberPhotoRepository;
 
     @Mock private LoanRepository loanRepository;
 
@@ -37,7 +46,9 @@ class MemberServiceTest {
 
     @BeforeEach
     void setUp() {
-        this.memberService = new MemberService(this.memberRepository, this.loanRepository);
+        this.memberService =
+                new MemberService(
+                        this.memberRepository, this.memberPhotoRepository, this.loanRepository);
     }
 
     private void saveReturnsArgument() {
@@ -165,8 +176,8 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("Exclui membro sem empréstimos ativos")
-    void givenMemberWithoutActiveLoans_whenDelete_thenMemberIsRemoved() {
+    @DisplayName("Exclui membro sem empréstimos ativos, com a foto")
+    void givenMemberWithoutActiveLoans_whenDelete_thenMemberAndPhotoAreRemoved() {
         // Arrange
         final Member member = new Member("Ana", EMAIL);
         Mockito.when(this.memberRepository.findById("m1")).thenReturn(Optional.of(member));
@@ -178,6 +189,7 @@ class MemberServiceTest {
 
         // Assert
         Mockito.verify(this.memberRepository).delete(member);
+        Mockito.verify(this.memberPhotoRepository).deleteById("m1");
     }
 
     @Test
@@ -232,5 +244,106 @@ class MemberServiceTest {
 
         // Assert
         Assertions.assertSame(page, result);
+    }
+
+    @Test
+    @DisplayName("Guarda a foto nova e muda a versão da foto do membro")
+    void givenJpeg_whenChangePhoto_thenSavesPhotoAndMemberHasNewVersion() {
+        // Arrange
+        this.memberExists();
+        this.saveReturnsArgument();
+
+        // Act
+        final Member updated = this.memberService.changePhoto("m1", JPEG);
+
+        // Assert
+        Assertions.assertEquals(1, updated.getPhotoVersion());
+        Mockito.verify(this.memberPhotoRepository)
+                .save(
+                        ArgumentMatchers.argThat(
+                                (final MemberPhoto photo) ->
+                                        "m1".equals(photo.getMemberId())
+                                                && Arrays.equals(JPEG, photo.getData())));
+    }
+
+    @Test
+    @DisplayName("Não guarda foto que não é JPEG")
+    void givenDataThatIsNotJpeg_whenChangePhoto_thenThrowsBadRequestAndSavesNothing() {
+        // Arrange
+        this.memberExists();
+        final byte[] png = {(byte) 0x89, 0x50, 0x4E, 0x47};
+
+        // Act
+        final BadRequestException thrown =
+                Assertions.assertThrows(
+                        BadRequestException.class, () -> this.memberService.changePhoto("m1", png));
+
+        // Assert
+        Assertions.assertEquals("Photo must be a JPEG image", thrown.getMessage());
+        Mockito.verify(this.memberPhotoRepository, Mockito.never()).save(ArgumentMatchers.any());
+        Mockito.verify(this.memberRepository, Mockito.never()).save(ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Não guarda foto de membro inexistente")
+    void givenUnknownMember_whenChangePhoto_thenThrowsNotFoundAndSavesNoPhoto() {
+        // Arrange
+        Mockito.when(this.memberRepository.findById("missing")).thenReturn(Optional.empty());
+
+        // Act
+        final NotFoundException thrown =
+                Assertions.assertThrows(
+                        NotFoundException.class,
+                        () -> this.memberService.changePhoto("missing", JPEG));
+
+        // Assert
+        Assertions.assertEquals("Member not found: missing", thrown.getMessage());
+        Mockito.verify(this.memberPhotoRepository, Mockito.never()).save(ArgumentMatchers.any());
+    }
+
+    @Test
+    @DisplayName("Devolve a imagem da foto do membro")
+    void givenMemberWithPhoto_whenFindPhoto_thenReturnsTheImage() {
+        // Arrange
+        Mockito.when(this.memberPhotoRepository.findById("m1"))
+                .thenReturn(Optional.of(new MemberPhoto("m1", JPEG)));
+
+        // Act
+        final byte[] image = this.memberService.findPhoto("m1");
+
+        // Assert
+        Assertions.assertArrayEquals(JPEG, image);
+    }
+
+    @Test
+    @DisplayName("Buscar a foto de membro sem foto lança NotFoundException")
+    void givenMemberWithoutPhoto_whenFindPhoto_thenThrowsNotFoundException() {
+        // Arrange
+        Mockito.when(this.memberPhotoRepository.findById("m1")).thenReturn(Optional.empty());
+
+        // Act
+        final NotFoundException thrown =
+                Assertions.assertThrows(
+                        NotFoundException.class, () -> this.memberService.findPhoto("m1"));
+
+        // Assert
+        Assertions.assertEquals("Photo not found for member: m1", thrown.getMessage());
+    }
+
+    @Test
+    @DisplayName("Remove a foto do membro")
+    void givenMemberWithPhoto_whenRemovePhoto_thenDeletesPhotoAndMemberHasNone() {
+        // Arrange
+        final Member member = new Member("Ana", EMAIL);
+        member.changePhoto();
+        Mockito.when(this.memberRepository.findById("m1")).thenReturn(Optional.of(member));
+        this.saveReturnsArgument();
+
+        // Act
+        final Member updated = this.memberService.removePhoto("m1");
+
+        // Assert
+        Assertions.assertNull(updated.getPhotoVersion());
+        Mockito.verify(this.memberPhotoRepository).deleteById("m1");
     }
 }

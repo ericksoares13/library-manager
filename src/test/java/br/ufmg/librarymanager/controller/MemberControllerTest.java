@@ -2,6 +2,7 @@ package br.ufmg.librarymanager.controller;
 
 import br.ufmg.librarymanager.dto.MemberRequest;
 import br.ufmg.librarymanager.dto.MemberSort;
+import br.ufmg.librarymanager.exception.BadRequestException;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Member;
@@ -12,6 +13,7 @@ import java.util.List;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.AdditionalMatchers;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -260,5 +262,88 @@ class MemberControllerTest {
         // Assert
         Assertions.assertEquals(HttpStatus.NO_CONTENT.value(), response.getStatus());
         Mockito.verify(this.memberService).delete(id);
+    }
+
+    @Test
+    @DisplayName("Envio da foto responde com a nova versão da foto")
+    void givenJpeg_whenPutPhoto_thenRespondsWithTheNewPhotoVersion() throws Exception {
+        // Arrange
+        final byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
+        final Member member = memberWithId("m1");
+        member.changePhoto();
+        Mockito.when(
+                        this.memberService.changePhoto(
+                                ArgumentMatchers.eq("m1"), AdditionalMatchers.aryEq(jpeg)))
+                .thenReturn(member);
+
+        // Act
+        final MockHttpServletResponse response =
+                this.perform(
+                        MockMvcRequestBuilders.put("/api/members/m1/photo")
+                                .contentType(MediaType.IMAGE_JPEG)
+                                .content(jpeg));
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.OK.value(), response.getStatus());
+        Assertions.assertEquals(
+                Integer.valueOf(1), JsonPath.read(body(response), "$.photoVersion"));
+    }
+
+    @Test
+    @DisplayName("Foto inválida responde 400 com a mensagem")
+    void givenInvalidPhoto_whenPutPhoto_thenRespondsWith400() throws Exception {
+        // Arrange
+        final byte[] png = {(byte) 0x89, 0x50, 0x4E, 0x47};
+        Mockito.when(
+                        this.memberService.changePhoto(
+                                ArgumentMatchers.eq("m1"), AdditionalMatchers.aryEq(png)))
+                .thenThrow(new BadRequestException("Photo must be a JPEG image"));
+
+        // Act
+        final MockHttpServletResponse response =
+                this.perform(
+                        MockMvcRequestBuilders.put("/api/members/m1/photo")
+                                .contentType(MediaType.IMAGE_PNG)
+                                .content(png));
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.BAD_REQUEST.value(), response.getStatus());
+        Assertions.assertEquals(
+                "Photo must be a JPEG image", JsonPath.read(body(response), "$.message"));
+    }
+
+    @Test
+    @DisplayName("Foto responde em JPEG e pode ficar no cache do navegador")
+    void givenMemberWithPhoto_whenGetPhoto_thenRespondsWithJpegCachedByTheBrowser()
+            throws Exception {
+        // Arrange
+        final byte[] jpeg = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
+        Mockito.when(this.memberService.findPhoto("m1")).thenReturn(jpeg);
+
+        // Act
+        final MockHttpServletResponse response =
+                this.perform(MockMvcRequestBuilders.get("/api/members/m1/photo?v=1"));
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.OK.value(), response.getStatus());
+        Assertions.assertEquals(MediaType.IMAGE_JPEG_VALUE, response.getContentType());
+        Assertions.assertEquals(
+                "max-age=31536000, public", response.getHeader(HttpHeaders.CACHE_CONTROL));
+        Assertions.assertArrayEquals(jpeg, response.getContentAsByteArray());
+    }
+
+    @Test
+    @DisplayName("Remover a foto responde com o membro sem foto")
+    void givenMemberWithPhoto_whenDeletePhoto_thenRespondsWithoutPhotoVersion() throws Exception {
+        // Arrange
+        Mockito.when(this.memberService.removePhoto("m1")).thenReturn(memberWithId("m1"));
+
+        // Act
+        final MockHttpServletResponse response =
+                this.perform(MockMvcRequestBuilders.delete("/api/members/m1/photo"));
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.OK.value(), response.getStatus());
+        Assertions.assertNull(JsonPath.read(body(response), "$.photoVersion"));
     }
 }

@@ -11,3 +11,9 @@ export { default as GroupIcon } from "@material-symbols/svg-300/rounded/group.sv
 export { default as MenuBookIcon } from "@material-symbols/svg-300/rounded/menu_book.svg?react";
 export { default as SearchIcon } from "@material-symbols/svg-300/rounded/search.svg?react";
 export { default as SwapIcon } from "@material-symbols/svg-300/rounded/swap_horiz.svg?react";
+export { default as PersonIcon } from "@material-symbols/svg-300/rounded/person.svg?react";
+export { default as PhotoCameraIcon } from "@material-symbols/svg-300/rounded/photo_camera.svg?react";
+export { default as PhotoLibraryIcon } from "@material-symbols/svg-300/rounded/photo_library.svg?react";
+export { default as CameraSwitchIcon } from "@material-symbols/svg-300/rounded/cameraswitch.svg?react";
+export { default as ZoomInIcon } from "@material-symbols/svg-300/rounded/zoom_in.svg?react";
+export { default as ZoomOutIcon } from "@material-symbols/svg-300/rounded/zoom_out.svg?react";

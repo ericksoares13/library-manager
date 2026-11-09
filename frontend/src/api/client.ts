@@ -13,7 +13,8 @@ export class ApiError extends Error {
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
-    headers: init?.body ? { "Content-Type": "application/json" } : undefined,
+    // Corpo em texto é JSON (`json`); um Blob (a foto) leva o próprio tipo
+    headers: typeof init?.body === "string" ? { "Content-Type": "application/json" } : undefined,
   });
   if (!response.ok) {
     const error = await response.json().catch(() => null);

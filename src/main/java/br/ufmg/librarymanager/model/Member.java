@@ -19,6 +19,11 @@ public class Member {
     // Chave de busca e ordenação do nome (ver SearchKey), recalculada sempre que o nome muda
     @Indexed private String nameKey;
 
+    private boolean hasPhoto;
+
+    // Cresce a cada foto nova e não volta atrás ao remover: o endereço da foto nunca se repete
+    private int photoVersion;
+
     protected Member() {}
 
     public Member(final String name, final String email) {
@@ -31,6 +36,21 @@ public class Member {
         this.name = name;
         this.email = email;
         this.nameKey = SearchKey.of(name);
+    }
+
+    /** Registra uma foto nova (a imagem fica em `MemberPhoto`). */
+    public void changePhoto() {
+        this.hasPhoto = true;
+        this.photoVersion++;
+    }
+
+    public void removePhoto() {
+        this.hasPhoto = false;
+    }
+
+    /** Versão da foto atual; `null` sem foto. */
+    public Integer getPhotoVersion() {
+        return this.hasPhoto ? this.photoVersion : null;
     }
 
     public String getId() {

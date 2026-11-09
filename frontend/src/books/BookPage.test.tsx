@@ -37,7 +37,7 @@ function loan(overrides: Partial<Loan> = {}): Loan {
   };
 }
 
-const ana: Member = { id: "m1", name: "Ana Souza", email: "ana@example.com" };
+const ana: Member = { id: "m1", name: "Ana Souza", email: "ana@example.com", photoVersion: null };
 
 const bookRoute = (body: Book = book()): Route => ({ method: "GET", url: "/api/books/b1", body });
 

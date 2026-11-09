@@ -14,6 +14,7 @@ import { LoanRow } from "../loans/LoanRow";
 import { emptyByStatus, sortOptions, statusOptions } from "../loans/options";
 import { ReturnDialog } from "../loans/ReturnDialog";
 import { MemberFormSheet } from "./MemberFormSheet";
+import { MemberPhoto } from "./MemberPhoto";
 
 /** Limite de empréstimos ativos por membro (`Member.MAX_ACTIVE_LOANS` no back). */
 const MAX_ACTIVE_LOANS = 3;
@@ -85,13 +86,16 @@ export function MemberPage({ id }: { id: string }) {
         title={`Empréstimos de ${name}`}
         header={
           <header className="page-header">
-            <div>
-              <h1 className="display">{name}</h1>
-              <p className="secondary page-count">
-                {email}
-                {activeLoans.data !== null &&
-                  ` · ${activeLoans.data} de ${MAX_ACTIVE_LOANS} livros emprestados`}
-              </p>
+            <div className="detail-title">
+              <MemberPhoto member={member.data} size="large" />
+              <div>
+                <h1 className="display">{name}</h1>
+                <p className="secondary page-count">
+                  {email}
+                  {activeLoans.data !== null &&
+                    ` · ${activeLoans.data} de ${MAX_ACTIVE_LOANS} livros emprestados`}
+                </p>
+              </div>
             </div>
             <div className="page-actions">
               <button

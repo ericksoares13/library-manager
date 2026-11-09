@@ -10,7 +10,7 @@ import { MemberPage } from "./MemberPage";
 // A listagem dos empréstimos (busca, situação, paginação) é a compartilhada, testada nas outras
 // telas; aqui fica o que é da página do membro
 
-const ana: Member = { id: "m1", name: "Ana Souza", email: "ana@example.com" };
+const ana: Member = { id: "m1", name: "Ana Souza", email: "ana@example.com", photoVersion: null };
 
 function loan(overrides: Partial<Loan> = {}): Loan {
   return {

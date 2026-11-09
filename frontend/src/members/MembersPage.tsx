@@ -7,6 +7,7 @@ import { ConfirmDeleteDialog } from "../components/ConfirmDeleteDialog";
 import { DeleteIcon, EditIcon, GroupIcon } from "../components/icons";
 import type { PageProps } from "../App";
 import { MemberFormSheet } from "./MemberFormSheet";
+import { MemberPhoto } from "./MemberPhoto";
 import { MemberPage } from "./MemberPage";
 
 type Editing = { member?: Member } | null;
@@ -52,6 +53,7 @@ export function MembersPage({ param: memberId }: PageProps) {
           onAdd={() => setEditing({})}
           renderItem={(member) => (
             <>
+              <MemberPhoto member={member} size="small" />
               <div className="row-main">
                 <a
                   className="row-title row-link"

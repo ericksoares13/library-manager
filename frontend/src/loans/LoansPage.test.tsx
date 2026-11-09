@@ -36,7 +36,7 @@ const domCasmurro: Book = {
 
 const helena: Book = { ...domCasmurro, id: "b2", title: "Helena", availableCopies: 0 };
 
-const ana: Member = { id: "m1", name: "Ana Souza", email: "ana@example.com" };
+const ana: Member = { id: "m1", name: "Ana Souza", email: "ana@example.com", photoVersion: null };
 
 const loansRoute = (items: Loan[]): Route => ({
   method: "GET",

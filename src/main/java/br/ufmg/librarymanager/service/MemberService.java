@@ -5,8 +5,10 @@ import br.ufmg.librarymanager.dto.MemberSort;
 import br.ufmg.librarymanager.exception.BusinessException;
 import br.ufmg.librarymanager.exception.NotFoundException;
 import br.ufmg.librarymanager.model.Member;
+import br.ufmg.librarymanager.model.MemberPhoto;
 import br.ufmg.librarymanager.model.SearchKey;
 import br.ufmg.librarymanager.repository.LoanRepository;
+import br.ufmg.librarymanager.repository.MemberPhotoRepository;
 import br.ufmg.librarymanager.repository.MemberRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,11 +19,16 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
 
+    private final MemberPhotoRepository memberPhotoRepository;
+
     private final LoanRepository loanRepository;
 
     public MemberService(
-            final MemberRepository memberRepository, final LoanRepository loanRepository) {
+            final MemberRepository memberRepository,
+            final MemberPhotoRepository memberPhotoRepository,
+            final LoanRepository loanRepository) {
         this.memberRepository = memberRepository;
+        this.memberPhotoRepository = memberPhotoRepository;
         this.loanRepository = loanRepository;
     }
 
@@ -66,6 +73,29 @@ public class MemberService {
             throw new BusinessException("A member with active loans cannot be deleted");
         }
         this.memberRepository.delete(member);
+        this.memberPhotoRepository.deleteById(id);
+    }
+
+    /** Troca a foto do membro (JPEG de até 1 MB; ver `MemberPhoto`). */
+    public Member changePhoto(final String id, final byte[] data) {
+        final Member member = this.findById(id);
+        this.memberPhotoRepository.save(new MemberPhoto(id, data));
+        member.changePhoto();
+        return this.memberRepository.save(member);
+    }
+
+    public byte[] findPhoto(final String id) {
+        return this.memberPhotoRepository
+                .findById(id)
+                .map(MemberPhoto::getData)
+                .orElseThrow(() -> new NotFoundException("Photo not found for member: " + id));
+    }
+
+    public Member removePhoto(final String id) {
+        final Member member = this.findById(id);
+        this.memberPhotoRepository.deleteById(id);
+        member.removePhoto();
+        return this.memberRepository.save(member);
     }
 
     private void requireEmailNotInUse(final String email) {

@@ -9,7 +9,13 @@ import { MembersPage } from "./MembersPage";
 // testados na página de livros; aqui fica só o que é próprio dos membros
 
 function member(overrides: Partial<Member> = {}): Member {
-  return { id: "m1", name: "Ana Souza", email: "ana@example.com", ...overrides };
+  return {
+    id: "m1",
+    name: "Ana Souza",
+    email: "ana@example.com",
+    photoVersion: null,
+    ...overrides,
+  };
 }
 
 const bruno = member({ id: "m2", name: "Bruno Lima", email: "bruno@example.com" });

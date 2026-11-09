@@ -7,6 +7,9 @@ import br.ufmg.librarymanager.dto.PageResponse;
 import br.ufmg.librarymanager.service.MemberService;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.time.Duration;
+import org.springframework.http.CacheControl;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,5 +62,28 @@ public class MemberController {
     public ResponseEntity<Void> delete(@PathVariable final String id) {
         this.memberService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/photo")
+    public MemberResponse changePhoto(
+            @PathVariable final String id, @RequestBody final byte[] photo) {
+        return MemberResponse.from(this.memberService.changePhoto(id, photo));
+    }
+
+    /**
+     * A foto em JPEG. O front pede com a versão no endereço (`?v=`), então o navegador pode guardar
+     * a imagem: uma foto nova tem outro endereço.
+     */
+    @GetMapping("/{id}/photo")
+    public ResponseEntity<byte[]> findPhoto(@PathVariable final String id) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic())
+                .body(this.memberService.findPhoto(id));
+    }
+
+    @DeleteMapping("/{id}/photo")
+    public MemberResponse removePhoto(@PathVariable final String id) {
+        return MemberResponse.from(this.memberService.removePhoto(id));
     }
 }

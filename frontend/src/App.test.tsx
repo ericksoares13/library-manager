@@ -154,7 +154,11 @@ describe("Navegação entre as telas", () => {
     mockApi(
       { method: "GET", url: "/api/books", body: page([]) },
       { method: "GET", url: "/api/members", body: page([]) },
-      { method: "GET", url: "/api/members/m1", body: { id: "m1", name: "Ana", email: "a@b.com" } },
+      {
+        method: "GET",
+        url: "/api/members/m1",
+        body: { id: "m1", name: "Ana", email: "a@b.com", photoVersion: null },
+      },
       { method: "GET", url: "/api/loans", body: page([]) },
     );
 
