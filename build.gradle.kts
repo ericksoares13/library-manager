@@ -69,6 +69,8 @@ spotless {
             "frontend/node_modules/**",
             "frontend/dist/**",
             "frontend/coverage/**",
+            "frontend/playwright-report/**",
+            "frontend/test-results/**",
             "frontend/package-lock.json",
         )
         prettier("3.6.2").configFile("frontend/.prettierrc.json")
@@ -106,6 +108,8 @@ val frontendSources =
         "frontend/package-lock.json",
         "frontend/vite.config.ts",
         "frontend/tsconfig.json",
+        "frontend/e2e",
+        "frontend/playwright.config.ts",
     )
 
 val buildFrontend by tasks.registering(com.github.gradle.node.npm.task.NpmTask::class) {
@@ -130,6 +134,22 @@ val testFrontend by tasks.registering(com.github.gradle.node.npm.task.NpmTask::c
     args = listOf("run", "test")
     inputs.files(frontendSources)
     outputs.dir("frontend/coverage")
+}
+
+// Testes end-to-end (Playwright): sobem o jar numa porta própria com o banco library-e2e. Fora do
+// `check` porque precisam do MongoDB rodando (no CI, instalado no próprio runner)
+val installE2eBrowsers by tasks.registering(com.github.gradle.node.npm.task.NpxTask::class) {
+    description = "Baixa o Chromium do Playwright (e as dependências do sistema no Linux)"
+    dependsOn(tasks.npmInstall)
+    command = "playwright"
+    args = listOf("install", "--with-deps", "chromium")
+}
+
+val e2eTest by tasks.registering(com.github.gradle.node.npm.task.NpmTask::class) {
+    description = "Roda os testes end-to-end (Playwright) contra a aplicação empacotada"
+    group = "verification"
+    dependsOn(tasks.npmInstall, installE2eBrowsers, tasks.bootJar)
+    args = listOf("run", "e2e")
 }
 
 tasks.processResources {

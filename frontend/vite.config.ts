@@ -13,6 +13,8 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["src/test/setup.ts"],
+    // Os testes end-to-end (e2e/, Playwright) rodam à parte, contra a aplicação de verdade
+    include: ["src/**/*.test.{ts,tsx}"],
     // Os testes de formulário digitam tecla a tecla; os runners do CI (macOS/Windows) são lentos
     testTimeout: 15_000,
     coverage: {

@@ -29,6 +29,7 @@ O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca
 - **Gradle (Kotlin DSL):** build e gerenciamento de dependências.
 - **JUnit 5:** testes de unidade do back-end.
 - **Vitest + Testing Library:** testes do front-end, simulando o uso da tela.
+- **Playwright:** testes end-to-end no navegador, contra a aplicação e o banco de verdade.
 - **JaCoCo:** medição da cobertura de testes.
 - **GitHub Actions:** integração contínua, com testes rodando em Linux, macOS e Windows a cada
   commit.
@@ -106,9 +107,16 @@ Pré-requisito: JDK 25 instalado. O Gradle Wrapper baixa o Gradle e o Node.js au
 
 # Tudo: formatação, lint, testes e verificação de cobertura mínima (80%)
 ./gradlew check
+
+# End-to-end (Playwright): exige o MongoDB rodando (docker compose up -d)
+./gradlew e2eTest
 ```
 
 No Windows, use `gradlew.bat` no lugar de `./gradlew`.
+
+Os testes end-to-end sobem a aplicação na porta 8090 com um banco separado (`library-e2e`), sem
+mexer nos dados de desenvolvimento, e usam a tela como um usuário: cadastram livros e membros
+(inclusive com foto), emprestam, devolvem e conferem as regras de negócio.
 
 Os relatórios de cobertura ficam em `build/reports/jacoco/test/html/index.html` (back-end) e
 `frontend/coverage/index.html` (front-end).

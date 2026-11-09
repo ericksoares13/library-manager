@@ -31,7 +31,7 @@ precisa cumprir:
 
 - **Back (Java 25 + Spring Boot 4):** JUnit 5 (Jupiter), Mockito, JaCoCo.
 - **Front (React + TypeScript):** Vitest + Testing Library (ver seção 2.10).
-- **E2E:** Playwright em TypeScript (a configurar).
+- **E2E:** Playwright em TypeScript, em `frontend/e2e/` (ver seção 2.11).
 
 **Onde ficam os testes:** `src/test/java/br/ufmg/librarymanager/`, espelhando `src/main`. Um arquivo
 por classe de produção (`Book.java` → `BookTest.java`).
@@ -303,6 +303,23 @@ describe("Lista de livros", () => {
 - **Arquivo:** ao lado do código, `BooksPage.tsx` → `BooksPage.test.tsx`.
 
 ---
+
+### 2.11 Testes end-to-end (Playwright)
+
+Poucos (topo da pirâmide), só os fluxos principais, e **o mais realistas possível** (decisão do
+autor): tudo pela tela, inclusive a preparação, contra a aplicação empacotada e o MongoDB de
+verdade.
+
+- **Onde:** `frontend/e2e/<assunto>.spec.ts`; passos repetidos (cadastrar livro, membro,
+  emprestar) ficam em `e2e/flows.ts`, escritos como o usuário faria na tela.
+- **Nome:** `test.describe` com o assunto e `test("frase curta em português")`.
+- **Estrutura:** `// Arrange` (dados criados pela tela), `// Act` (o fluxo testado, que pode ter
+  vários passos) e `// Assert` (`expect` do Playwright, que espera o elemento aparecer).
+- **Dados:** cada teste cria os seus com nomes e ISBNs únicos (`unique()`, `randomIsbn()`): o banco
+  `library-e2e` guarda as execuções anteriores e os testes não dependem uns dos outros.
+- **Buscas na tela:** por papel e texto visível (`getByRole`, `getByLabel`), nunca por classe CSS.
+- **Sem `waitForTimeout`:** as asserções do Playwright já esperam; datas pelo fuso da aplicação
+  (`displayDate`).
 
 ## 3. Checklist ao escrever um teste
 
