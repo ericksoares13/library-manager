@@ -21,13 +21,26 @@ class MemberTest {
     }
 
     @Test
-    @DisplayName("Atualiza nome e e-mail junto com a chave de busca")
+    @DisplayName("Membro novo guarda o e-mail em minúsculas")
+    void givenEmailWithUppercase_whenCreateMember_thenEmailIsLowercase() {
+        // Arrange
+        final String email = "Ana@Example.com";
+
+        // Act
+        final Member member = new Member("Ana", email);
+
+        // Assert
+        Assertions.assertEquals("ana@example.com", member.getEmail());
+    }
+
+    @Test
+    @DisplayName("Atualiza nome, e-mail (em minúsculas) e chave de busca")
     void givenMember_whenUpdateDetails_thenNameEmailAndSearchKeyAreUpdated() {
         // Arrange
         final Member member = new Member("Ana", "ana@example.com");
 
         // Act
-        member.updateDetails("Ana Souza", "ana.souza@example.com");
+        member.updateDetails("Ana Souza", "Ana.Souza@Example.com");
 
         // Assert
         Assertions.assertEquals("Ana Souza", member.getName());

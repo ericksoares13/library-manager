@@ -1,5 +1,6 @@
 package br.ufmg.librarymanager.model;
 
+import java.util.Locale;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -28,13 +29,21 @@ public class Member {
 
     public Member(final String name, final String email) {
         this.name = name;
-        this.email = email;
+        this.email = normalizeEmail(email);
         this.nameKey = SearchKey.of(name);
+    }
+
+    /**
+     * E-mail como é guardado: em minúsculas, para "Ana@Example.com" e "ana@example.com" serem o
+     * mesmo e-mail no índice único.
+     */
+    public static String normalizeEmail(final String email) {
+        return email.toLowerCase(Locale.ROOT);
     }
 
     public void updateDetails(final String name, final String email) {
         this.name = name;
-        this.email = email;
+        this.email = normalizeEmail(email);
         this.nameKey = SearchKey.of(name);
     }
 

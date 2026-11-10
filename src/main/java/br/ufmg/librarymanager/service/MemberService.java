@@ -54,16 +54,18 @@ public class MemberService {
     }
 
     public Member create(final MemberRequest request) {
-        this.requireEmailNotInUse(request.email());
-        return this.memberRepository.save(new Member(request.name(), request.email()));
+        final String email = Member.normalizeEmail(request.email());
+        this.requireEmailNotInUse(email);
+        return this.memberRepository.save(new Member(request.name(), email));
     }
 
     public Member update(final String id, final MemberRequest request) {
         final Member member = this.findById(id);
-        if (!member.getEmail().equals(request.email())) {
-            this.requireEmailNotInUse(request.email());
+        final String email = Member.normalizeEmail(request.email());
+        if (!member.getEmail().equals(email)) {
+            this.requireEmailNotInUse(email);
         }
-        member.updateDetails(request.name(), request.email());
+        member.updateDetails(request.name(), email);
         return this.memberRepository.save(member);
     }
 

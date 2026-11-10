@@ -106,10 +106,10 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("Não cadastra membro com e-mail repetido")
-    void givenRegisteredEmail_whenCreate_thenThrowsBusinessExceptionAndDoesNotSave() {
+    @DisplayName("Não cadastra membro com e-mail repetido, nem com outras maiúsculas")
+    void givenRegisteredEmailInOtherCase_whenCreate_thenThrowsBusinessExceptionAndDoesNotSave() {
         // Arrange
-        final MemberRequest request = new MemberRequest("Outra Ana", EMAIL);
+        final MemberRequest request = new MemberRequest("Outra Ana", "Ana@Example.com");
         Mockito.when(this.memberRepository.existsByEmail(EMAIL)).thenReturn(true);
 
         // Act
@@ -124,10 +124,10 @@ class MemberServiceTest {
     }
 
     @Test
-    @DisplayName("Mantém o e-mail sem verificar duplicidade de novo")
-    void givenSameEmail_whenUpdate_thenUpdatesWithoutCheckingEmailAgain() {
+    @DisplayName("Mantém o e-mail, mesmo com outras maiúsculas, sem verificar duplicidade")
+    void givenSameEmailInOtherCase_whenUpdate_thenUpdatesWithoutCheckingEmailAgain() {
         // Arrange
-        final MemberRequest request = new MemberRequest("Ana Souza", EMAIL);
+        final MemberRequest request = new MemberRequest("Ana Souza", "ANA@example.com");
         this.memberExists();
         this.saveReturnsArgument();
 
