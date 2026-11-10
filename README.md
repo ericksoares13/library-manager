@@ -1,7 +1,13 @@
 # Library Manager
 
+[![CI](https://github.com/ericksoares13/library-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/ericksoares13/library-manager/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/ericksoares13/library-manager/graph/badge.svg)](https://codecov.io/gh/ericksoares13/library-manager)
+
 Sistema web de gerenciamento de biblioteca, desenvolvido como trabalho prático da disciplina de
 Teste de Software.
+
+**No ar:** https://library-manager-u8yk.onrender.com (a primeira visita pode levar cerca de 1
+minuto, ver [Deploy](#deploy)).
 
 ## Integrantes
 
@@ -9,37 +15,58 @@ Teste de Software.
 
 ## Sobre o sistema
 
-O Library Manager permite gerenciar o acervo e os empréstimos de uma biblioteca:
+O Library Manager é a ferramenta do administrador de uma biblioteca para cuidar do acervo, dos
+leitores e dos empréstimos. Não há login: os membros são registros cadastrados pelo administrador, e
+é ele quem escolhe o livro e o membro de cada empréstimo.
 
-- **Livros:** cadastro com título, autor, ISBN e quantidade de exemplares, com controle dos
-  exemplares disponíveis.
-- **Membros:** cadastro de leitores com nome e e-mail.
-- **Empréstimos:** empréstimo de um livro a um membro com data de devolução prevista, além do
+- **Livros:** cadastro com título, autor, ISBN (conferido pelo dígito verificador) e quantidade de
+  exemplares. A capa é buscada pelo ISBN na [Open Library](https://openlibrary.org) e pode ser
+  ampliada com um toque. A página do livro mostra os exemplares disponíveis e os empréstimos dele.
+- **Membros:** cadastro com nome, e-mail e foto, tirada pela câmera ou enviada de um arquivo e
+  ajustada num recorte. A página do membro mostra quantos livros ele tem emprestados e os
+  empréstimos dele.
+- **Empréstimos:** empréstimo de um livro a um membro com prazo de 14 dias, destaque dos atrasados e
   registro da devolução.
+- **Listas:** todas as telas têm busca (sem diferenciar acentos), ordenação, filtro por situação nos
+  empréstimos e paginação.
+
+Regras de negócio:
+
+- ISBN e e-mail não se repetem, e o ISBN não muda depois do cadastro.
+- Cada membro tem no máximo 3 empréstimos ativos e não pega duas cópias do mesmo livro ao mesmo
+  tempo.
+- Só se empresta um livro com exemplar disponível, e o total de exemplares não pode ficar abaixo dos
+  que estão emprestados.
+- Livros e membros com empréstimo ativo não podem ser excluídos.
+- Um empréstimo é devolvido uma única vez, e nunca antes da data em que foi feito.
 
 ## Tecnologias
 
 - **Java 25:** linguagem principal.
 - **Spring Boot:** framework web para a API REST, a validação de dados e a integração com o banco.
-- **MongoDB:** banco de dados NoSQL que armazena livros, membros e empréstimos.
+- **MongoDB:** banco de dados NoSQL que armazena livros, membros, fotos e empréstimos.
 - **React + TypeScript:** interface web, em `frontend/`.
 - **Vite:** servidor de desenvolvimento e build do front-end, servido pelo próprio Spring Boot.
 - **Motion:** animações da interface.
 - **Material Symbols (Google):** ícones da interface, no estilo Rounded (licença Apache 2.0).
+- **Open Library:** capas dos livros, buscadas pelo ISBN.
 - **Gradle (Kotlin DSL):** build e gerenciamento de dependências.
-- **JUnit 5:** testes de unidade do back-end.
+- **Spotless, Checkstyle e ESLint:** formatação e padrão de código, verificados no build.
+- **JUnit 5 + Mockito:** testes de unidade do back-end.
 - **Vitest + Testing Library:** testes do front-end, simulando o uso da tela.
 - **Playwright:** testes end-to-end no navegador, contra a aplicação e o banco de verdade.
-- **JaCoCo:** medição da cobertura de testes.
+- **JaCoCo e V8 (Vitest):** medição da cobertura de testes do back-end e do front-end.
 - **GitHub Actions:** integração contínua, com testes rodando em Linux, macOS e Windows a cada
   commit.
 - **Codecov:** publicação dos relatórios de cobertura.
+- **Docker, Render e MongoDB Atlas:** imagem da aplicação, hospedagem e banco em produção.
 
 ## Uso de IA
 
 - **Claude Code (Anthropic):** assistente de programação usado no terminal para estruturar o
-  projeto, auxiliar na escrita do código e da documentação. Todo o código gerado foi revisado pelo
-  autor.
+  projeto, auxiliar na escrita do código, dos testes e da documentação e investigar erros. Teve
+  papel maior no front-end, nas telas, animações e gestos da interface, construídos a partir das
+  ideias e dos ajustes pedidos pelo autor. Todo o código gerado foi revisado pelo autor.
 - **Skills do Claude Code** (`.claude/skills/`): instruções que orientam o assistente neste projeto.
   - `tests`: convenções e boas práticas de teste, baseadas no curso de Teste de Software do Prof.
     André Hora (DCC/UFMG).
@@ -93,6 +120,18 @@ docker run -p 8080:8080 -e MONGODB_URI=mongodb://host.docker.internal:27017/libr
 
 No plano gratuito, o Render desliga o serviço após cerca de 15 minutos sem acesso; a primeira visita
 seguinte leva em torno de 1 minuto para carregar.
+
+## Testes
+
+- **Unidade e integração do back-end (JUnit):** entidades com as regras de negócio (sem mocks),
+  services com Mockito e data fixa, controllers e validações da API.
+- **Front-end (Vitest + Testing Library):** cada tela é usada como um usuário usaria, com a API
+  simulada: cadastro, edição, exclusão, busca, empréstimo, devolução e mensagens de erro.
+- **End-to-end (Playwright):** 5 fluxos completos no navegador, com a aplicação e o MongoDB de
+  verdade.
+- **Cobertura:** mínimo de 80% no back-end e no front-end, verificado no build.
+
+O CI roda tudo isso em Linux, macOS e Windows a cada commit e envia a cobertura ao Codecov.
 
 ## Execução dos testes
 
