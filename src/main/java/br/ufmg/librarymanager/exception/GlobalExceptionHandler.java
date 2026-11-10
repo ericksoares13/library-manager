@@ -2,6 +2,7 @@ package br.ufmg.librarymanager.exception;
 
 import java.util.Comparator;
 import java.util.stream.Collectors;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -22,6 +23,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiError> handleBusiness(final BusinessException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(new ApiError(ex.getMessage()));
+    }
+
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<ApiError> handleDuplicateKey(final DuplicateKeyException ex) {
+        // Dois cadastros iguais ao mesmo tempo passam pela verificação do service e o índice
+        // único recusa o segundo: mesma resposta do ISBN/e-mail repetido
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(new ApiError("A record with the same unique value already exists"));
     }
 
     @ExceptionHandler(BadRequestException.class)

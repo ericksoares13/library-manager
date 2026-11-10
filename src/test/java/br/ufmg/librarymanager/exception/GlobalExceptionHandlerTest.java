@@ -7,6 +7,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.core.MethodParameter;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -61,6 +62,22 @@ class GlobalExceptionHandlerTest {
         // Assert
         Assertions.assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
         Assertions.assertEquals(new ApiError("No copies available"), response.getBody());
+    }
+
+    @Test
+    @DisplayName("Chave única repetida no banco responde 409")
+    void givenDuplicateKeyException_whenHandle_thenRespondsWith409() {
+        // Arrange
+        final DuplicateKeyException exception = new DuplicateKeyException("E11000 duplicate key");
+
+        // Act
+        final ResponseEntity<ApiError> response = this.handler.handleDuplicateKey(exception);
+
+        // Assert
+        Assertions.assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        Assertions.assertEquals(
+                new ApiError("A record with the same unique value already exists"),
+                response.getBody());
     }
 
     @Test
