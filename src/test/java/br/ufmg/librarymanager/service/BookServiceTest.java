@@ -193,19 +193,19 @@ class BookServiceTest {
     }
 
     @Test
-    @DisplayName("Busca no título, no autor e no ISBN sem diferenciar acentos")
-    void givenQueryWithAccentsAndCase_whenSearch_thenUsesTheNormalizedKey() {
+    @DisplayName("Busca pela chave no título e no autor e em maiúsculas no ISBN (X do ISBN-10)")
+    void givenQuery_whenSearch_thenUsesTheKeyAndTheUppercaseIsbn() {
         // Arrange
         final Pageable pageable = PageRequest.of(0, 20, BookSort.TITLE.toSort());
         final Page<Book> page = new PageImpl<>(List.of(existingBook()));
         Mockito.when(
                         this.bookRepository
                                 .findByTitleKeyContainingOrAuthorKeyContainingOrIsbnContaining(
-                                        "memorias", "memorias", "memorias", pageable))
+                                        "080442957x", "080442957x", "080442957X", pageable))
                 .thenReturn(page);
 
         // Act
-        final Page<Book> result = this.bookService.search(" Memórias ", BookSort.TITLE, 0, 20);
+        final Page<Book> result = this.bookService.search(" 080442957x ", BookSort.TITLE, 0, 20);
 
         // Assert
         Assertions.assertSame(page, result);

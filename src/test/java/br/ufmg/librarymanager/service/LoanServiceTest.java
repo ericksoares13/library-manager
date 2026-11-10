@@ -319,7 +319,7 @@ class LoanServiceTest {
         Mockito.when(
                         this.bookRepository
                                 .findIdsByTitleKeyContainingOrAuthorKeyContainingOrIsbnContaining(
-                                        "jose", "jose", "jose"))
+                                        "jose", "jose", "JOSE"))
                 .thenReturn(List.of(idOnly("b1")));
         Mockito.when(
                         this.memberRepository.findIdsByNameKeyContainingOrEmailContainingIgnoreCase(

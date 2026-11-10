@@ -8,6 +8,7 @@ import br.ufmg.librarymanager.model.Book;
 import br.ufmg.librarymanager.model.SearchKey;
 import br.ufmg.librarymanager.repository.BookRepository;
 import br.ufmg.librarymanager.repository.LoanRepository;
+import java.util.Locale;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,7 @@ public class BookService {
 
     /**
      * Página da listagem. A busca (`query`) ignora maiúsculas e acentos e procura no título, no
-     * autor e no ISBN; em branco, lista todos.
+     * autor e no ISBN (este em maiúsculas, pelo "X" do ISBN-10); em branco, lista todos.
      */
     public Page<Book> search(
             final String query, final BookSort sort, final int page, final int size) {
@@ -36,7 +37,7 @@ public class BookService {
             return this.bookRepository.findAll(pageable);
         }
         return this.bookRepository.findByTitleKeyContainingOrAuthorKeyContainingOrIsbnContaining(
-                key, key, key, pageable);
+                key, key, key.toUpperCase(Locale.ROOT), pageable);
     }
 
     public Book findById(final String id) {

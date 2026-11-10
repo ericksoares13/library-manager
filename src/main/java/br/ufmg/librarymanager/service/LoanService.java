@@ -18,6 +18,7 @@ import br.ufmg.librarymanager.repository.MemberRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -144,7 +145,7 @@ public class LoanService {
         return ids(
                 this.bookRepository
                         .findIdsByTitleKeyContainingOrAuthorKeyContainingOrIsbnContaining(
-                                key, key, key));
+                                key, key, key.toUpperCase(Locale.ROOT)));
     }
 
     private List<String> memberIdsMatching(final String key) {
