@@ -69,6 +69,21 @@ class BookRequestTest {
                 Set.of("title: title is required", "author: author is required"), violations);
     }
 
+    @ParameterizedTest(name = "ISBN = {0}")
+    @NullAndEmptySource
+    @ValueSource(strings = {"   "})
+    @DisplayName("ISBN em branco acusa só que é obrigatório")
+    void givenBlankIsbn_whenValidate_thenReportsOnlyRequiredIsbn(final String blank) {
+        // Arrange
+        final BookRequest request = new BookRequest("Dom Casmurro", "Machado", blank, 1);
+
+        // Act
+        final Set<String> violations = ConstraintViolations.of(request);
+
+        // Assert
+        Assertions.assertEquals(Set.of("isbn: isbn is required"), violations);
+    }
+
     @Test
     @DisplayName("Exige pelo menos um exemplar")
     void givenZeroCopies_whenValidate_thenReportsMinimumCopies() {

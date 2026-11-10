@@ -8,8 +8,9 @@ public record BookRequest(
         @NotBlank(message = "title is required") String title,
         @NotBlank(message = "author is required") String author,
         @NotBlank(message = "isbn is required")
+                // Aceita em branco: aí o erro é só o do @NotBlank
                 @Pattern(
-                        regexp = "\\d{9}[\\dX]|\\d{13}",
+                        regexp = "\\s*|\\d{9}[\\dX]|\\d{13}",
                         message = "isbn must have 10 or 13 digits")
                 @ValidIsbn
                 String isbn,
