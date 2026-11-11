@@ -26,9 +26,9 @@ describe("Validação do formulário de membro", () => {
     expect(errors).toEqual({ name: "Informe o nome.", email: "Informe o e-mail." });
   });
 
-  // Sem "@" / sem nada antes do "@" / dois "@" / com espaço
-  it.each(["ana", "@example.com", "ana@@example.com", "ana souza@example.com"])(
-    "recusa e-mail %j",
+  // Com "+" / domínio sem ponto / com acento: o @Email do back aceita os três
+  it.each(["ana+tag@example.com", "ana@localhost", "joão@example.com"])(
+    "aceita e-mail %j",
     (email) => {
       // Arrange
       const form = { ...validForm, email };
@@ -37,7 +37,29 @@ describe("Validação do formulário de membro", () => {
       const errors = validateMember(form);
 
       // Assert
-      expect(errors).toEqual({ email: "Informe um e-mail válido." });
+      expect(errors).toEqual({});
     },
   );
+
+  // Sem "@" / sem nada antes do "@" / dois "@" / com espaço / ponto no fim do nome / dois pontos
+  // seguidos no nome / parte vazia no domínio / hífen no começo do domínio
+  it.each([
+    "ana",
+    "@example.com",
+    "ana@@example.com",
+    "ana souza@example.com",
+    "ana.@example.com",
+    "an..a@example.com",
+    "ana@example..com",
+    "ana@-example.com",
+  ])("recusa e-mail %j", (email) => {
+    // Arrange
+    const form = { ...validForm, email };
+
+    // Act
+    const errors = validateMember(form);
+
+    // Assert
+    expect(errors).toEqual({ email: "Informe um e-mail válido." });
+  });
 });
